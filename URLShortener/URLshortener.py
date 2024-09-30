@@ -4,9 +4,9 @@ import pyshorteners
 import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl 
 import qrcode
-from PIL import Image
+from PIL import Image, ImageDraw
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QClipboard
 from PyQt6.QtCore import Qt, QTimer, QDateTime
 
 class URLShortenerApp(QWidget):
@@ -17,7 +17,7 @@ class URLShortenerApp(QWidget):
         
     def initUI(self):
         self.setWindowTitle('URL Shortener')
-        self.resize(800, 600)  # Aumentar o tamanho da janela
+        self.resize(900, 600)  # Aumentar a largura da janela
         
         # Layout principal
         layout = QVBoxLayout()
@@ -58,19 +58,27 @@ class URLShortenerApp(QWidget):
         copy_button.clicked.connect(self.copy_to_clipboard)
         copy_button.setMinimumHeight(40)  # Ajustar a altura do botão
         result_layout.addWidget(copy_button)
+
+        # Botão para copiar QR Code
+        copy_qr_button = QPushButton("Copiar QR Code", self)
+        copy_qr_button.clicked.connect(self.copy_qr_code_to_clipboard)
+        copy_qr_button.setMinimumHeight(40)
+        result_layout.addWidget(copy_qr_button)
         
         # Campo de saída para QR Code
         self.qr_code_label = QLabel(self)
+        self.qr_code_label.setFixedSize(150, 150)  # QR Code menor
         self.qr_code_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         result_layout.addWidget(self.qr_code_label)
         
         # Tabela para histórico
         self.history_table = QTableWidget(self)
-        self.history_table.setColumnCount(2)
-        self.history_table.setHorizontalHeaderLabels(["URL Original", "URL Encurtada"])
+        self.history_table.setColumnCount(3)
+        self.history_table.setHorizontalHeaderLabels(["URL Original", "URL Encurtada", "QR Code"])
         self.history_table.horizontalHeader().setStretchLastSection(True)
-        self.history_table.setColumnWidth(0, 400)  # Ajustar largura das colunas
-        self.history_table.setColumnWidth(1, 400)
+        self.history_table.setColumnWidth(0, 350)  # Ajustar largura das colunas
+        self.history_table.setColumnWidth(1, 350)
+        self.history_table.setColumnWidth(2, 150)
         self.history_table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #f0f0f0; }")  # Fundo cinza claro no cabeçalho
         
         # Adicionar layouts ao layout principal
@@ -120,7 +128,7 @@ class URLShortenerApp(QWidget):
         self.copy_to_clipboard()
 
         # Gerar QR Code com o texto "TJSP" no meio
-        self.generate_qr_code(short_url)
+        qr_image_path = self.generate_qr_code(short_url)
 
         # Limpar URL original após encurtar
         self.url_input.clear()
@@ -130,6 +138,12 @@ class URLShortenerApp(QWidget):
         self.history_table.insertRow(row_position)
         self.history_table.setItem(row_position, 0, QTableWidgetItem(long_url))
         self.history_table.setItem(row_position, 1, QTableWidgetItem(short_url))
+
+        # Adicionar QR Code na tabela
+        qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
+        qr_label = QLabel()
+        qr_label.setPixmap(qr_pixmap)
+        self.history_table.setCellWidget(row_position, 2, qr_label)
         
     def get_short_url(self, long_url):
         try:
@@ -142,6 +156,12 @@ class URLShortenerApp(QWidget):
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.short_url_output.text())
+
+    def copy_qr_code_to_clipboard(self):
+        clipboard = QApplication.clipboard()
+        pixmap = self.qr_code_label.pixmap()
+        if pixmap:
+            clipboard.setPixmap(pixmap)
         
     def generate_qr_code(self, short_url):
         qr = qrcode.QRCode(
@@ -156,17 +176,20 @@ class URLShortenerApp(QWidget):
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
 
         # Adicionar texto "TJSP" no centro do QR Code
-        logo = Image.new("RGB", (100, 100), (255, 255, 255))
-        draw = Image.Draw.Draw(logo)
-        draw.text((10, 40), "TJSP", fill=(0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        text = "TJSP"
+        text_width, text_height = draw.textsize(text)
+        position = ((img.size[0] - text_width) // 2, (img.size[1] - text_height) // 2)
+        draw.text(position, text, fill=(255, 0, 0))  # Texto em vermelho para maior visibilidade
 
-        img.paste(logo, ((img.size[0] - logo.size[0]) // 2, (img.size[1] - logo.size[1]) // 2))
-
-        img.save("qrcode.png")
+        qr_image_path = "qrcode.png"
+        img.save(qr_image_path)
         
         # Mostrar o QR Code na interface
-        pixmap = QPixmap("qrcode.png")
+        pixmap = QPixmap(qr_image_path).scaled(150, 150, Qt.AspectRatioMode.KeepAspectRatio)
         self.qr_code_label.setPixmap(pixmap)
+
+        return qr_image_path
         
     def show_context_menu(self, position):
         menu = QMenu()
@@ -182,13 +205,22 @@ class URLShortenerApp(QWidget):
             
     def show_context_menu_history(self, position):
         menu = QMenu()
-        copy_action = menu.addAction("Copiar")
+        copy_action = menu.addAction("Copiar URL")
+        copy_qr_action = menu.addAction("Copiar QR Code")
         action = menu.exec(self.history_table.mapToGlobal(position))
-        if action == copy_action:
-            selected_items = self.history_table.selectedItems()
-            if selected_items:
-                clipboard = QApplication.clipboard()
-                clipboard.setText(selected_items[0].text())
+        selected_items = self.history_table.selectedItems()
+        if action == copy_action and selected_items:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(selected_items[0].text())
+        elif action == copy_qr_action:
+            row = self.history_table.currentRow()
+            if row >= 0:
+                qr_label = self.history_table.cellWidget(row, 2)
+                if qr_label and isinstance(qr_label, QLabel):
+                    pixmap = qr_label.pixmap()
+                    if pixmap:
+                        clipboard = QApplication.clipboard()
+                        clipboard.setPixmap(pixmap)
                 
     def show_temporary_message(self, message, timeout=2000):
         self.temp_message = QLabel(message, self)
