@@ -3,10 +3,7 @@ import sys
 import pyshorteners
 import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl 
-import qrcode
-from PIL import Image
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox
-from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QTimer, QDateTime
 
 class URLShortenerApp(QWidget):
@@ -58,11 +55,6 @@ class URLShortenerApp(QWidget):
         copy_button.clicked.connect(self.copy_to_clipboard)
         copy_button.setMinimumHeight(40)  # Ajustar a altura do botão
         result_layout.addWidget(copy_button)
-        
-        # Campo de saída para QR Code
-        self.qr_code_label = QLabel(self)
-        self.qr_code_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        result_layout.addWidget(self.qr_code_label)
         
         # Tabela para histórico
         self.history_table = QTableWidget(self)
@@ -118,12 +110,6 @@ class URLShortenerApp(QWidget):
         
         # Copiar automaticamente para a área de transferência
         self.copy_to_clipboard()
-
-        # Gerar QR Code com o texto "TJSP" no meio
-        self.generate_qr_code(short_url)
-
-        # Limpar URL original após encurtar
-        self.url_input.clear()
         
         # Atualizar histórico
         row_position = self.history_table.rowCount()
@@ -142,31 +128,6 @@ class URLShortenerApp(QWidget):
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.short_url_output.text())
-        
-    def generate_qr_code(self, short_url):
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(short_url)
-        qr.make(fit=True)
-
-        img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
-
-        # Adicionar texto "TJSP" no centro do QR Code
-        logo = Image.new("RGB", (100, 100), (255, 255, 255))
-        draw = Image.Draw.Draw(logo)
-        draw.text((10, 40), "TJSP", fill=(0, 0, 0))
-
-        img.paste(logo, ((img.size[0] - logo.size[0]) // 2, (img.size[1] - logo.size[1]) // 2))
-
-        img.save("qrcode.png")
-        
-        # Mostrar o QR Code na interface
-        pixmap = QPixmap("qrcode.png")
-        self.qr_code_label.setPixmap(pixmap)
         
     def show_context_menu(self, position):
         menu = QMenu()
