@@ -2,9 +2,9 @@
 import sys
 import pyshorteners
 import pyshorteners.shorteners
-import pyshorteners.shorteners.tinyurl 
+import pyshorteners.shorteners.tinyurl
 import qrcode
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox
 from PyQt6.QtGui import QPixmap, QClipboard
 from PyQt6.QtCore import Qt, QTimer, QDateTime
@@ -30,7 +30,7 @@ class URLShortenerApp(QWidget):
         self.url_input = QLineEdit(self)
         self.url_input.setPlaceholderText("Entre a URL a ser encurtada")
         self.url_input.setMinimumHeight(40)  # Aumentar a altura da entrada de URL
-        self.url_input.setStyleSheet("background-color: #ffffff;")  # Fundo branco
+        self.url_input.setStyleSheet("background-color: #ffffff; color: #000000;")  # Fundo branco, texto preto
         self.url_input.returnPressed.connect(self.shorten_url)  # Conectar a tecla Enter à função shorten_url
         input_label = QLabel("URL Original:")
         input_label.setFixedWidth(100)
@@ -47,7 +47,7 @@ class URLShortenerApp(QWidget):
         self.short_url_output = QLineEdit(self)
         self.short_url_output.setReadOnly(True)
         self.short_url_output.setMinimumHeight(40)  # Aumentar a altura da saída de URL
-        self.short_url_output.setStyleSheet("background-color: #ffffff;")  # Fundo branco
+        self.short_url_output.setStyleSheet("background-color: #ffffff; color: #000000;")  # Fundo branco, texto preto
         result_label = QLabel("URL Encurtada:")
         result_label.setFixedWidth(100)
         result_layout.addWidget(result_label)
@@ -120,31 +120,38 @@ class URLShortenerApp(QWidget):
         
     def shorten_url(self):
         long_url = self.url_input.text()
+        print(f"URL Digitada: {long_url}")  # Depuração para verificar se a URL foi capturada
+
         self.show_temporary_message("Encurtando...")
         short_url = self.get_short_url(long_url)
-        self.short_url_output.setText(short_url)
         
-        # Copiar automaticamente para a área de transferência
-        self.copy_to_clipboard()
-
-        # Gerar QR Code com o texto "TJSP" no meio, usando a URL original
-        qr_image_path = self.generate_qr_code(long_url)
-
-        # Limpar URL original após encurtar
-        self.url_input.clear()
+        # Verificar se o encurtamento ocorreu sem erros
+        if "Error" not in short_url:
+            self.short_url_output.setText(short_url)
+            self.short_url_output.repaint()  # Forçar atualização da interface
+            print(f"URL Encurtada: {short_url}")  # Depuração para verificar se a URL encurtada está correta
         
-        # Atualizar histórico
-        row_position = self.history_table.rowCount()
-        self.history_table.insertRow(row_position)
-        self.history_table.setItem(row_position, 0, QTableWidgetItem(long_url))
-        self.history_table.setItem(row_position, 1, QTableWidgetItem(short_url))
+            # Copiar automaticamente para a área de transferência
+            self.copy_to_clipboard()
 
-        # Adicionar QR Code na tabela
-        qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
-        qr_label = QLabel()
-        qr_label.setPixmap(qr_pixmap)
-        self.history_table.setCellWidget(row_position, 2, qr_label)
-        
+            # Gerar QR Code com o texto "TJSP" no meio, usando a URL original
+            qr_image_path = self.generate_qr_code(long_url)
+
+            # Limpar URL original após encurtar
+            self.url_input.clear()
+            
+            # Atualizar histórico
+            row_position = self.history_table.rowCount()
+            self.history_table.insertRow(row_position)
+            self.history_table.setItem(row_position, 0, QTableWidgetItem(long_url))
+            self.history_table.setItem(row_position, 1, QTableWidgetItem(short_url))
+
+            # Adicionar QR Code na tabela
+            qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
+            qr_label = QLabel()
+            qr_label.setPixmap(qr_pixmap)
+            self.history_table.setCellWidget(row_position, 2, qr_label)
+
     def get_short_url(self, long_url):
         try:
             type_tiny = pyshorteners.Shortener(timeout=10)
@@ -156,6 +163,7 @@ class URLShortenerApp(QWidget):
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.short_url_output.text())
+        print(f"Copiado para área de transferência: {self.short_url_output.text()}")  # Depuração
 
     def copy_qr_code_to_clipboard(self):
         clipboard = QApplication.clipboard()
@@ -173,24 +181,43 @@ class URLShortenerApp(QWidget):
         qr.add_data(url)
         qr.make(fit=True)
 
+        # Gerar a imagem do QR Code
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
-
-        # Adicionar texto "TJSP" no centro do QR Code
-        draw = ImageDraw.Draw(img)
-        text = "TJSP"
-        bbox = draw.textbbox((0, 0), text)  # Substituir textsize por textbbox para obter as dimensões
-        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        position = ((img.size[0] - text_width) // 2, (img.size[1] - text_height) // 2)
-        draw.text(position, text, fill=(255, 0, 0))  # Texto em vermelho para maior visibilidade
-
-        qr_image_path = "qrcode.png"
-        img.save(qr_image_path)
         
-        # Mostrar o QR Code na interface
-        pixmap = QPixmap(qr_image_path).scaled(150, 150, Qt.AspectRatioMode.KeepAspectRatio)
-        self.qr_code_label.setPixmap(pixmap)
+        # Criar uma nova imagem maior para acomodar o texto abaixo do QR Code
+        new_height = img.size[1] + 30  # Aumentar a altura para adicionar espaço para o texto
+        new_img = Image.new("RGB", (img.size[0], new_height), (255, 255, 255))  # Fundo branco
+        new_img.paste(img, (0, 0))  # Colar o QR Code na parte superior
+
+        # Adicionar o texto abaixo do QR Code
+        draw = ImageDraw.Draw(new_img)
+        text = "TJSP - Link para entrar na reunião"
+        try:
+            # Usar uma fonte TrueType se disponível para melhorar a qualidade
+            font = ImageFont.truetype("arial.ttf", 30)  # Aumentar o tamanho da fonte
+        except IOError:
+            # Caso a fonte TrueType não esteja disponível, usar a fonte padrão
+            font = ImageFont.load_default()
+        
+        bbox = draw.textbbox((0, 0), text, font=font)  # Substituir textsize por textbbox para obter as dimensões
+        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        position = ((new_img.size[0] - text_width) // 2, img.size[1] + 2)  # Centralizado horizontalmente e próximo ao QR Code
+        draw.text(position, text, fill=(0, 0, 0), font=font)  # Texto em preto
+
+        # Salvar a imagem do QR Code com alta qualidade
+        qr_image_path = "qrcode.png"
+        new_img.save(qr_image_path, quality=95)
+        
+        # Mostrar o QR Code na interface após garantir a inicialização completa do ambiente gráfico
+        if QApplication.instance() is not None:
+            pixmap = QPixmap(qr_image_path).scaled(150, 200, Qt.AspectRatioMode.KeepAspectRatio)
+            self.qr_code_label.setPixmap(pixmap)
 
         return qr_image_path
+
+
+
+
         
     def show_context_menu(self, position):
         menu = QMenu()
