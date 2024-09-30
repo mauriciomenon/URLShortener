@@ -1,4 +1,4 @@
-# Mauricio Menon (+AI) 22072024
+# Mauricio Menon (+AI) 30092024
 import sys
 import pyshorteners
 import pyshorteners.shorteners
@@ -194,7 +194,7 @@ class URLShortenerApp(QWidget):
         text = "TJSP - Link para entrar na reunião"
         try:
             # Usar uma fonte TrueType se disponível para melhorar a qualidade
-            font = ImageFont.truetype("arial.ttf", 30)  # Aumentar o tamanho da fonte
+            font = ImageFont.truetype("arial.ttf", 22)  # Aumentar o tamanho da fonte
         except IOError:
             # Caso a fonte TrueType não esteja disponível, usar a fonte padrão
             font = ImageFont.load_default()
@@ -263,7 +263,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.7")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.9")
         about_msg.setGeometry(50, 50, 150, 100)  # Ainda menor e exibida ao lado esquerdo
         about_msg.exec()
         
