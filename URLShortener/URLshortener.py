@@ -127,8 +127,8 @@ class URLShortenerApp(QWidget):
         # Copiar automaticamente para a área de transferência
         self.copy_to_clipboard()
 
-        # Gerar QR Code com o texto "TJSP" no meio
-        qr_image_path = self.generate_qr_code(short_url)
+        # Gerar QR Code com o texto "TJSP" no meio, usando a URL original
+        qr_image_path = self.generate_qr_code(long_url)
 
         # Limpar URL original após encurtar
         self.url_input.clear()
@@ -159,18 +159,18 @@ class URLShortenerApp(QWidget):
 
     def copy_qr_code_to_clipboard(self):
         clipboard = QApplication.clipboard()
-        pixmap = self.qr_code_label.pixmap()
-        if pixmap:
+        pixmap = QPixmap("qrcode.png")
+        if not pixmap.isNull():
             clipboard.setPixmap(pixmap)
         
-    def generate_qr_code(self, short_url):
+    def generate_qr_code(self, url):
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_H,
             box_size=10,
             border=4,
         )
-        qr.add_data(short_url)
+        qr.add_data(url)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
@@ -178,7 +178,8 @@ class URLShortenerApp(QWidget):
         # Adicionar texto "TJSP" no centro do QR Code
         draw = ImageDraw.Draw(img)
         text = "TJSP"
-        text_width, text_height = draw.textsize(text)
+        bbox = draw.textbbox((0, 0), text)  # Substituir textsize por textbbox para obter as dimensões
+        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
         position = ((img.size[0] - text_width) // 2, (img.size[1] - text_height) // 2)
         draw.text(position, text, fill=(255, 0, 0))  # Texto em vermelho para maior visibilidade
 
@@ -217,8 +218,8 @@ class URLShortenerApp(QWidget):
             if row >= 0:
                 qr_label = self.history_table.cellWidget(row, 2)
                 if qr_label and isinstance(qr_label, QLabel):
-                    pixmap = qr_label.pixmap()
-                    if pixmap:
+                    pixmap = QPixmap("qrcode.png")
+                    if not pixmap.isNull():
                         clipboard = QApplication.clipboard()
                         clipboard.setPixmap(pixmap)
                 
