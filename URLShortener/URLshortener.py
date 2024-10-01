@@ -7,7 +7,7 @@ import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox
 from PyQt6.QtGui import QPixmap, QClipboard
-from PyQt6.QtCore import Qt, QTimer, QDateTime
+from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
 class URLShortenerApp(QWidget):
     def __init__(self):
@@ -17,164 +17,167 @@ class URLShortenerApp(QWidget):
         
     def initUI(self):
         self.setWindowTitle('URL Shortener')
-        self.resize(900, 600)  # Aumentar a largura da janela
-        
+        self.resize(1100, 750)  # Ajuste na altura da janela para acomodar a tabela de histórico maior
+
         # Layout principal
-        layout = QVBoxLayout()
-        
-        # Layout para entrada e resultado
-        input_layout = QHBoxLayout()
-        result_layout = QHBoxLayout()
+        main_layout = QHBoxLayout()  # Usando layout horizontal principal para acomodar as linhas e o QR Code
+
+        # Definindo tamanho fixo para os botões
+        button_size = QSize(100, 40)
+
+        # Layout das três linhas de entrada e saída (URL Original, URL Encurtada, URL Alternativa)
         urls_layout = QVBoxLayout()
-        
+
         # Campo de entrada para URL original
+        url_input_layout = QHBoxLayout()
+        url_input_label = QLabel("URL Original:")
+        url_input_label.setFixedWidth(150)
         self.url_input = QLineEdit(self)
         self.url_input.setPlaceholderText("Entre a URL a ser encurtada")
-        self.url_input.setMinimumHeight(40)  # Aumentar a altura da entrada de URL
-        self.url_input.setStyleSheet("background-color: #ffffff; color: #000000;")  # Fundo branco, texto preto
-        self.url_input.returnPressed.connect(self.shorten_url)  # Conectar a tecla Enter à função shorten_url
-        input_label = QLabel("URL Original:")
-        input_label.setFixedWidth(100)
-        input_layout.addWidget(input_label)
-        input_layout.addWidget(self.url_input)
-        
-        # Botão para encurtar URL
+        self.url_input.setMinimumHeight(30)
+        self.url_input.setFixedWidth(600)  #  a largura da caixa de entrada
+        self.url_input.setStyleSheet("background-color: #ffffff; color: #000000;")
+        self.url_input.returnPressed.connect(self.shorten_url)
         shorten_button = QPushButton("Encurtar", self)
+        shorten_button.setFixedSize(button_size)
         shorten_button.clicked.connect(self.shorten_url)
-        shorten_button.setMinimumHeight(40)  # Ajustar a altura do botão
-        input_layout.addWidget(shorten_button)
-        
-        # Campo de saída para URL encurtado principal
+        url_input_layout.addWidget(url_input_label)
+        url_input_layout.addWidget(self.url_input)
+        url_input_layout.addWidget(shorten_button)
+
+        # Campo de saída para URL encurtada principal
         short_url_layout = QHBoxLayout()
+        short_url_label = QLabel("URL Encurtada:")
+        short_url_label.setFixedWidth(150)
         self.short_url_output = QLineEdit(self)
         self.short_url_output.setReadOnly(True)
-        self.short_url_output.setMinimumHeight(40)  # Aumentar a altura da saída de URL
-        self.short_url_output.setStyleSheet("background-color: #ffffff; color: #000000;")  # Fundo branco, texto preto
-        result_label = QLabel("URL Encurtada [1]:")
-        result_label.setFixedWidth(150)
-        short_url_layout.addWidget(result_label)
-        short_url_layout.addWidget(self.short_url_output)
-        
-        # Botão para copiar URL encurtado principal
+        self.short_url_output.setMinimumHeight(30)
+        self.short_url_output.setFixedWidth(600)  # largura da caixa de saída principal 
+        self.short_url_output.setStyleSheet("background-color: #ffffff; color: #000000;")
         copy_button = QPushButton("Copiar", self)
+        copy_button.setFixedSize(button_size)
         copy_button.clicked.connect(self.copy_to_clipboard)
-        copy_button.setMinimumHeight(40)  # Ajustar a altura do botão
+        short_url_layout.addWidget(short_url_label)
+        short_url_layout.addWidget(self.short_url_output)
         short_url_layout.addWidget(copy_button)
-        
-        urls_layout.addLayout(short_url_layout)
-        
+
         # Campo de saída para URL encurtada alternativa
-        alt_url_layout = QHBoxLayout()
+        alt_short_url_layout = QHBoxLayout()
+        alt_short_url_label = QLabel("URL Encurtada Alternativa:")
+        alt_short_url_label.setFixedWidth(150)
         self.alt_short_url_output = QLineEdit(self)
         self.alt_short_url_output.setReadOnly(True)
-        self.alt_short_url_output.setMinimumHeight(40)  # Aumentar a altura da saída de URL
-        self.alt_short_url_output.setStyleSheet("background-color: #ffffff; color: #000000;")  # Fundo branco, texto preto
-        alt_result_label = QLabel("URL Encurtada [2]:")
-        alt_result_label.setFixedWidth(150)
-        alt_url_layout.addWidget(alt_result_label)
-        alt_url_layout.addWidget(self.alt_short_url_output)
-        
-        # Botão para copiar URL encurtada alternativa
+        self.alt_short_url_output.setMinimumHeight(30)
+        self.alt_short_url_output.setFixedWidth(600)  # Reduzindo a largura da caixa de saída alternativa em aproximadamente 20%
+        self.alt_short_url_output.setStyleSheet("background-color: #ffffff; color: #000000;")
         copy_alt_button = QPushButton("Copiar", self)
+        copy_alt_button.setFixedSize(button_size)
         copy_alt_button.clicked.connect(self.copy_alt_to_clipboard)
-        copy_alt_button.setMinimumHeight(40)  # Ajustar a altura do botão
-        alt_url_layout.addWidget(copy_alt_button)
-        
-        urls_layout.addLayout(alt_url_layout)
-        
-        # Adicionar URLs ao layout de resultado
-        result_layout.addLayout(urls_layout)
-        
-        # Campo de saída para QR Code
+        alt_short_url_layout.addWidget(alt_short_url_label)
+        alt_short_url_layout.addWidget(self.alt_short_url_output)
+        alt_short_url_layout.addWidget(copy_alt_button)
+
+        # Adicionar todas as linhas de URL ao layout vertical
+        urls_layout.addLayout(url_input_layout)
+        urls_layout.addLayout(short_url_layout)
+        urls_layout.addLayout(alt_short_url_layout)
+
+        # Layout para o QR Code e botão copiar QR Code, alinhado à direita das três linhas
+        qr_code_layout = QVBoxLayout()
         self.qr_code_label = QLabel(self)
-        self.qr_code_label.setFixedSize(150, 150)  # QR Code menor
+        self.qr_code_label.setFixedSize(155, 155)  # Tamanho ajustado do QR Code
         self.qr_code_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        result_layout.addWidget(self.qr_code_label)
-        
-        # Tabela para histórico
+
+        # Adicionar QR Code ao layout e alinhá-lo na altura das duas primeiras linhas
+        qr_code_layout.addStretch()  # Espaço flexível antes do QR Code para ajustá-lo verticalmente
+        qr_code_layout.addWidget(self.qr_code_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        #qr_code_layout.addStretch()  # Adicionar mais espaço antes do botão "Copiar QR Code"
+
+        # Botão para copiar QR Code deve estar perfeitamente alinhado abaixo do QR Code
+        copy_qr_button = QPushButton("Copiar QR Code", self)
+        copy_qr_button.setMinimumHeight(40)
+        copy_qr_button.setMaximumWidth(self.qr_code_label.width())  # Fazer o botão ter a mesma largura do QR Code
+        copy_qr_button.clicked.connect(self.copy_qr_code_to_clipboard)
+        qr_code_layout.addWidget(copy_qr_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # Adicionar espaço flexível abaixo do botão para manter alinhamento
+        qr_code_layout.addStretch()
+
+        # Adicionar os layouts de URL e QR Code ao layout principal
+        main_layout.addLayout(urls_layout)
+        main_layout.addLayout(qr_code_layout)
+
+        # Layout para histórico
+        history_layout = QVBoxLayout()
         self.history_table = QTableWidget(self)
         self.history_table.setColumnCount(4)
         self.history_table.setHorizontalHeaderLabels(["URL Original", "URL Encurtada", "URL Alternativa", "QR Code"])
         self.history_table.horizontalHeader().setStretchLastSection(True)
-        self.history_table.setColumnWidth(0, 300)  # Ajustar largura das colunas
-        self.history_table.setColumnWidth(1, 200)
-        self.history_table.setColumnWidth(2, 200)
-        self.history_table.setColumnWidth(3, 100)
-        self.history_table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #f0f0f0; }")  # Fundo cinza claro no cabeçalho
-        
-        # Adicionar layouts ao layout principal
-        layout.addLayout(input_layout)
-        layout.addLayout(result_layout)
-        layout.addWidget(QLabel("Histórico:"))
-        layout.addWidget(self.history_table)
-        
-        # Configurar layout principal
-        self.setLayout(layout)
-        
-        # Menu de contexto para copiar texto
-        self.url_input.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.url_input.customContextMenuRequested.connect(self.show_context_menu)
-        
-        self.short_url_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.short_url_output.customContextMenuRequested.connect(self.show_context_menu)
-        
-        self.history_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.history_table.customContextMenuRequested.connect(self.show_context_menu_history)
-        
+        self.history_table.setColumnWidth(0, 350)
+        self.history_table.setColumnWidth(1, 250)
+        self.history_table.setColumnWidth(2, 250)
+        self.history_table.setColumnWidth(3, 200)
+        self.history_table.setMinimumHeight(350)  # Aumentar ainda mais a altura mínima da tabela
+        self.history_table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #f0f0f0; }")
+
+        # Adicionar histórico ao layout principal
+        history_layout.addWidget(QLabel("Histórico:"))
+        history_layout.addWidget(self.history_table)
+
+        # Configurar layout principal para ser vertical, contendo tanto as URLs/QR Code quanto o histórico
+        main_vertical_layout = QVBoxLayout()
+        main_vertical_layout.addLayout(main_layout)
+        main_vertical_layout.addLayout(history_layout)
+
         # Adicionar menu About e data/hora
         footer_layout = QHBoxLayout()
         about_button = QPushButton("About", self)
+        about_button.setFixedSize(button_size)
         about_button.clicked.connect(self.show_about_dialog)
-        about_button.setMinimumHeight(20)  # Reduzir o tamanho do botão About
         footer_layout.addWidget(about_button)
-        
+
         self.datetime_label = QLabel(self)
         self.datetime_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         footer_layout.addWidget(self.datetime_label)
-        
-        layout.addLayout(footer_layout)
-        
+
+        main_vertical_layout.addLayout(footer_layout)
+
+        # Configurar o layout principal da janela
+        self.setLayout(main_vertical_layout)
+
         # Atualizar data e hora a cada segundo
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_datetime)
         self.timer.start(1000)
-        
+
     def shorten_url(self):
         long_url = self.url_input.text()
-        print(f"URL Digitada: {long_url}")  # Depuração para verificar se a URL foi capturada
+        print(f"URL Digitada: {long_url}")
 
         self.show_temporary_message("Encurtando...")
         short_url = self.get_short_url(long_url)
         alt_short_url = self.get_alt_short_url(long_url)
-        
-        # Verificar se o encurtamento ocorreu sem erros
+
         if "Error" not in short_url:
             self.short_url_output.setText(short_url)
-            self.short_url_output.repaint()  # Forçar atualização da interface
-            print(f"URL Encurtada: {short_url}")  # Depuração para verificar se a URL encurtada está correta
+            self.short_url_output.repaint()
+            print(f"URL Encurtada: {short_url}")
 
-            # Setar URL encurtada alternativa
             self.alt_short_url_output.setText(alt_short_url)
-            self.alt_short_url_output.repaint()  # Forçar atualização da interface
+            self.alt_short_url_output.repaint()
             print(f"URL Encurtada Alternativa: {alt_short_url}")
 
-            # Copiar automaticamente para a área de transferência
             self.copy_to_clipboard()
 
-            # Gerar QR Code com o texto "TJSP" no meio, usando a URL original
             qr_image_path = self.generate_qr_code(long_url)
-
-            # Limpar URL original após encurtar
             self.url_input.clear()
-            
-            # Atualizar histórico
+
             row_position = self.history_table.rowCount()
             self.history_table.insertRow(row_position)
             self.history_table.setItem(row_position, 0, QTableWidgetItem(long_url))
             self.history_table.setItem(row_position, 1, QTableWidgetItem(short_url))
             self.history_table.setItem(row_position, 2, QTableWidgetItem(alt_short_url))
 
-            # Adicionar QR Code na tabela
             qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
             qr_label = QLabel()
             qr_label.setPixmap(qr_pixmap)
@@ -195,18 +198,18 @@ class URLShortenerApp(QWidget):
             return alt_short_url
         except Exception as e:
             return f"Error: {e}"
-        
+
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.short_url_output.text())
-        print(f"Copiado para área de transferência: {self.short_url_output.text()}")  # Depuração
+        print(f"Copiado para área de transferência: {self.short_url_output.text()}")
 
     def copy_alt_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.alt_short_url_output.text())
-        print(f"Copiado para área de transferência (alternativo): {self.alt_short_url_output.text()}")  # Depuração
+        print(f"Copiado para área de transferência (alternativo): {self.alt_short_url_output.text()}")
 
-
+    # Restante do código permanece igual...
 
 
     def copy_qr_code_to_clipboard(self):
@@ -258,8 +261,6 @@ class URLShortenerApp(QWidget):
             self.qr_code_label.setPixmap(pixmap)
 
         return qr_image_path
-
-
 
 
         
