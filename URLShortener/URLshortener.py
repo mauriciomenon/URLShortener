@@ -74,6 +74,9 @@ class URLShortenerApp(QWidget):
         urls_layout = QVBoxLayout()
         urls_layout.setSpacing(10)
 
+        # Largura fixa para campos de entrada
+        input_width = 600
+
         # Campo de entrada para URL original
         url_input_layout = QHBoxLayout()
         url_input_label = QLabel("URL Original:")
@@ -81,7 +84,7 @@ class URLShortenerApp(QWidget):
         self.url_input = QLineEdit(self)
         self.url_input.setPlaceholderText("Entre a URL a ser encurtada")
         self.url_input.setMinimumHeight(30)
-        self.url_input.setFixedWidth(600)
+        self.url_input.setFixedWidth(input_width)
         self.url_input.returnPressed.connect(self.shorten_url)
         shorten_button = QPushButton("Encurtar", self)
         shorten_button.setFixedSize(button_size)
@@ -89,21 +92,23 @@ class URLShortenerApp(QWidget):
         url_input_layout.addWidget(url_input_label)
         url_input_layout.addWidget(self.url_input)
         url_input_layout.addWidget(shorten_button)
+        url_input_layout.addStretch()
 
-        # Campo de entrada para texto do QR Code (abaixo da URL original)
+        # Campo de entrada para texto do QR Code
         qr_text_layout = QHBoxLayout()
         qr_text_label = QLabel("Texto do QR Code:")
         qr_text_label.setFixedWidth(150)
         self.qr_text_input = QLineEdit(self)
         self.qr_text_input.setPlaceholderText("Texto abaixo do QR Code")
         self.qr_text_input.setText("TJSP - Link para entrar na reunião")
-        self.qr_text_input.setFixedWidth(600)
+        self.qr_text_input.setFixedWidth(input_width)
         self.qr_text_input.setMinimumHeight(30)
         qr_text_checkbox = QCheckBox("Mostrar no QR", self)
-        qr_text_checkbox.setChecked(True)  # Por padrão, mostrar o texto
+        qr_text_checkbox.setChecked(True)
         qr_text_layout.addWidget(qr_text_label)
         qr_text_layout.addWidget(self.qr_text_input)
         qr_text_layout.addWidget(qr_text_checkbox)
+        qr_text_layout.addStretch()
 
         # Conectar o checkbox à visibilidade do texto
         qr_text_checkbox.stateChanged.connect(lambda state: self.update_qr_text_visibility(state))
@@ -115,13 +120,14 @@ class URLShortenerApp(QWidget):
         self.short_url_output = QLineEdit(self)
         self.short_url_output.setReadOnly(True)
         self.short_url_output.setMinimumHeight(30)
-        self.short_url_output.setFixedWidth(600)
+        self.short_url_output.setFixedWidth(input_width)
         copy_button = QPushButton("Copiar", self)
         copy_button.setFixedSize(button_size)
         copy_button.clicked.connect(self.copy_to_clipboard)
         short_url_layout.addWidget(short_url_label)
         short_url_layout.addWidget(self.short_url_output)
         short_url_layout.addWidget(copy_button)
+        short_url_layout.addStretch()
 
         # Campo de saída para URL encurtada alternativa
         alt_short_url_layout = QHBoxLayout()
@@ -130,13 +136,14 @@ class URLShortenerApp(QWidget):
         self.alt_short_url_output = QLineEdit(self)
         self.alt_short_url_output.setReadOnly(True)
         self.alt_short_url_output.setMinimumHeight(30)
-        self.alt_short_url_output.setFixedWidth(600)
+        self.alt_short_url_output.setFixedWidth(input_width)
         copy_alt_button = QPushButton("Copiar", self)
         copy_alt_button.setFixedSize(button_size)
         copy_alt_button.clicked.connect(self.copy_alt_to_clipboard)
         alt_short_url_layout.addWidget(alt_short_url_label)
         alt_short_url_layout.addWidget(self.alt_short_url_output)
         alt_short_url_layout.addWidget(copy_alt_button)
+        alt_short_url_layout.addStretch()
 
         # Adicionar todas as linhas de URL ao layout vertical
         urls_layout.addLayout(url_input_layout)
@@ -368,7 +375,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.11\n01-10-2024")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.12\n02-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()
 
