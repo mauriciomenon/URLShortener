@@ -44,6 +44,10 @@ class URLShortenerApp(QWidget):
                 font-size: 10pt;
                 color: #000000;
             }
+            QCheckBox {
+                font-size: 10pt;
+                color: #000000;
+            }
             QHeaderView::section {
                 background-color: #0078d7;
                 color: #ffffff;
@@ -95,7 +99,7 @@ class URLShortenerApp(QWidget):
         self.qr_text_input.setText("TJSP - Link para entrar na reunião")
         self.qr_text_input.setFixedWidth(600)
         self.qr_text_input.setMinimumHeight(30)
-        qr_text_checkbox = QCheckBox("Mostrar Texto", self)
+        qr_text_checkbox = QCheckBox("Mostrar no QR", self)
         qr_text_checkbox.setChecked(True)  # Por padrão, mostrar o texto
         qr_text_layout.addWidget(qr_text_label)
         qr_text_layout.addWidget(self.qr_text_input)
