@@ -180,7 +180,7 @@ class URLShortenerApp(QWidget):
         self.history_table.setColumnWidth(3, 60)
         self.history_table.setColumnWidth(4, 100)
         self.history_table.setMinimumHeight(350)
-        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        #self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         # Configuração do menu de contexto para a tabela de histórico
         self.history_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
