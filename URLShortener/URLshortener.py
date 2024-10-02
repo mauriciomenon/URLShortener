@@ -58,7 +58,7 @@ class URLShortenerApp(QWidget):
         """)
 
         self.setWindowTitle('URL Shortener')
-        self.resize(1100, 750)
+        self.resize(1100, 800)
 
         # Layout principal
         main_layout = QHBoxLayout()
@@ -68,6 +68,7 @@ class URLShortenerApp(QWidget):
 
         # Layout das três linhas de entrada e saída (URL Original, URL Encurtada, URL Alternativa)
         urls_layout = QVBoxLayout()
+        urls_layout.setSpacing(10)  # Reduzindo o espaçamento entre os elementos
 
         # Campo de entrada para URL original
         url_input_layout = QHBoxLayout()
@@ -122,6 +123,7 @@ class URLShortenerApp(QWidget):
 
         # Layout para o QR Code e botão copiar QR Code
         qr_code_layout = QVBoxLayout()
+        qr_code_layout.setSpacing(10)  # Reduzindo o espaçamento entre QR Code e botão
         self.qr_code_label = QLabel(self)
         self.qr_code_label.setFixedSize(155, 155)
         self.qr_code_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
