@@ -151,6 +151,7 @@ class URLShortenerApp(QWidget):
         self.history_table.setColumnWidth(3, 60)
         self.history_table.setColumnWidth(4, 100)
         self.history_table.setMinimumHeight(350)
+        self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         # Configuração do menu de contexto para a tabela de histórico
         self.history_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -215,19 +216,18 @@ class URLShortenerApp(QWidget):
             # Obter timestamp do momento de geração
             timestamp = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
 
-            # Atualizar histórico
-            row_position = self.history_table.rowCount()
-            self.history_table.insertRow(row_position)
-            self.history_table.setItem(row_position, 0, QTableWidgetItem(long_url))
-            self.history_table.setItem(row_position, 1, QTableWidgetItem(short_url))
-            self.history_table.setItem(row_position, 2, QTableWidgetItem(alt_short_url))
-            self.history_table.setItem(row_position, 4, QTableWidgetItem(timestamp))
+            # Atualizar histórico (inverter ordem para o mais recente no topo)
+            self.history_table.insertRow(0)
+            self.history_table.setItem(0, 0, QTableWidgetItem(long_url))
+            self.history_table.setItem(0, 1, QTableWidgetItem(short_url))
+            self.history_table.setItem(0, 2, QTableWidgetItem(alt_short_url))
+            self.history_table.setItem(0, 4, QTableWidgetItem(timestamp))
 
             # Adicionar QR Code na tabela
             qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
             qr_label = QLabel()
             qr_label.setPixmap(qr_pixmap)
-            self.history_table.setCellWidget(row_position, 3, qr_label)
+            self.history_table.setCellWidget(0, 3, qr_label)
 
     def show_temporary_message(self, message, timeout=2000):
         self.temp_message = QLabel(message, self)
