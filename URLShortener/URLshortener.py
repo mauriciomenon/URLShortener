@@ -5,7 +5,7 @@ import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox, QCheckBox
 from PyQt6.QtGui import QPixmap, QClipboard
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
@@ -68,7 +68,7 @@ class URLShortenerApp(QWidget):
 
         # Layout das três linhas de entrada e saída (URL Original, URL Encurtada, URL Alternativa)
         urls_layout = QVBoxLayout()
-        urls_layout.setSpacing(10)  # Reduzindo o espaçamento entre os elementos
+        urls_layout.setSpacing(10)
 
         # Campo de entrada para URL original
         url_input_layout = QHBoxLayout()
@@ -85,6 +85,24 @@ class URLShortenerApp(QWidget):
         url_input_layout.addWidget(url_input_label)
         url_input_layout.addWidget(self.url_input)
         url_input_layout.addWidget(shorten_button)
+
+        # Campo de entrada para texto do QR Code (abaixo da URL original)
+        qr_text_layout = QHBoxLayout()
+        qr_text_label = QLabel("Texto do QR Code:")
+        qr_text_label.setFixedWidth(150)
+        self.qr_text_input = QLineEdit(self)
+        self.qr_text_input.setPlaceholderText("Texto abaixo do QR Code")
+        self.qr_text_input.setText("TJSP - Link para entrar na reunião")
+        self.qr_text_input.setFixedWidth(600)
+        self.qr_text_input.setMinimumHeight(30)
+        qr_text_checkbox = QCheckBox("Mostrar Texto", self)
+        qr_text_checkbox.setChecked(True)  # Por padrão, mostrar o texto
+        qr_text_layout.addWidget(qr_text_label)
+        qr_text_layout.addWidget(self.qr_text_input)
+        qr_text_layout.addWidget(qr_text_checkbox)
+
+        # Conectar o checkbox à visibilidade do texto
+        qr_text_checkbox.stateChanged.connect(lambda state: self.update_qr_text_visibility(state))
 
         # Campo de saída para URL encurtada principal
         short_url_layout = QHBoxLayout()
@@ -118,16 +136,15 @@ class URLShortenerApp(QWidget):
 
         # Adicionar todas as linhas de URL ao layout vertical
         urls_layout.addLayout(url_input_layout)
+        urls_layout.addLayout(qr_text_layout)
         urls_layout.addLayout(short_url_layout)
         urls_layout.addLayout(alt_short_url_layout)
 
-        # Layout para o QR Code e botão copiar QR Code
+        # Layout para QR Code e botão copiar QR Code (lado direito das caixas de texto)
         qr_code_layout = QVBoxLayout()
-        qr_code_layout.setSpacing(10)  # Reduzindo o espaçamento entre QR Code e botão
         self.qr_code_label = QLabel(self)
         self.qr_code_label.setFixedSize(155, 155)
         self.qr_code_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        qr_code_layout.addStretch()
         qr_code_layout.addWidget(self.qr_code_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         copy_qr_button = QPushButton("Copiar QR Code", self)
@@ -135,13 +152,12 @@ class URLShortenerApp(QWidget):
         copy_qr_button.setMaximumWidth(self.qr_code_label.width())
         copy_qr_button.clicked.connect(self.copy_qr_code_to_clipboard)
         qr_code_layout.addWidget(copy_qr_button, alignment=Qt.AlignmentFlag.AlignHCenter)
-        qr_code_layout.addStretch()
 
-        # Adicionar os layouts de URL e QR Code ao layout principal
+        # Adicionar os layouts de URLs e QR Code ao layout principal
         main_layout.addLayout(urls_layout)
         main_layout.addLayout(qr_code_layout)
 
-        # Layout para histórico
+        # Layout inferior (parte debaixo) para o histórico
         history_layout = QVBoxLayout()
         self.history_table = QTableWidget(self)
         self.history_table.setColumnCount(5)
@@ -159,7 +175,7 @@ class URLShortenerApp(QWidget):
         self.history_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.history_table.customContextMenuRequested.connect(self.show_context_menu_history)
 
-        # Adicionar histórico ao layout principal
+        # Adicionar histórico ao layout inferior
         history_layout.addWidget(QLabel("Histórico:"))
         history_layout.addWidget(self.history_table)
 
@@ -230,6 +246,9 @@ class URLShortenerApp(QWidget):
             qr_label = QLabel()
             qr_label.setPixmap(qr_pixmap)
             self.history_table.setCellWidget(0, 3, qr_label)
+
+    def update_qr_text_visibility(self, state):
+        self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
 
     def show_temporary_message(self, message, timeout=2000):
         self.temp_message = QLabel(message, self)
@@ -321,16 +340,17 @@ class URLShortenerApp(QWidget):
 
         # Adicionar o texto abaixo do QR Code
         draw = ImageDraw.Draw(new_img)
-        text = "TJSP - Link para entrar na reunião"
-        try:
-            font = ImageFont.truetype("arial.ttf", 22)
-        except IOError:
-            font = ImageFont.load_default()
+        qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
+        if qr_text:
+            try:
+                font = ImageFont.truetype("arial.ttf", 22)
+            except IOError:
+                font = ImageFont.load_default()
         
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        position = ((new_img.size[0] - text_width) // 2, img.size[1] + 2)
-        draw.text(position, text, fill=(0, 0, 0), font=font)
+            bbox = draw.textbbox((0, 0), qr_text, font=font)
+            text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+            position = ((new_img.size[0] - text_width) // 2, img.size[1] + 2)
+            draw.text(position, qr_text, fill=(0, 0, 0), font=font)
 
         qr_image_path = "qrcode.png"
         new_img.save(qr_image_path, quality=95)
@@ -344,7 +364,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.10\n01-10-2024")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.11\n01-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()
 
