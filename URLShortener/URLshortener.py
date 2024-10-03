@@ -1,4 +1,4 @@
-# Mauricio Menon (+AI) 02102024
+# Mauricio Menon (+AI) 03102024
 import sys, os
 import pyshorteners
 import pyshorteners.shorteners
@@ -36,7 +36,7 @@ class URLShortenerApp(QWidget):
         self.setStyleSheet("""
             QWidget {
                 background-color: #e6e6e6;
-                font-family: 'Segoe UI';
+                font-family: 'Arial';
                 font-size: 10pt;
             }
             QPushButton {
@@ -364,7 +364,8 @@ class URLShortenerApp(QWidget):
         # Gerar a imagem do QR Code e redimensionar para um tamanho fixo (250x250 pixels)
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
         fixed_size = (250, 250)
-        img = img.resize(fixed_size, Image.ANTIALIAS)
+        img = img.resize(fixed_size, Image.LANCZOS)
+        #img = img.resize(fixed_size, Image.ANTIALIAS)
 
         # Criar uma nova imagem para adicionar o texto abaixo do QR Code
         new_height = img.size[1] + 50
