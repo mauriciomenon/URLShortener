@@ -352,9 +352,20 @@ class URLShortenerApp(QWidget):
         qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
         if qr_text:
             try:
+                # Primeira tentativa: carregar Arial pelo nome genérico
                 font = ImageFont.truetype("arial.ttf", 32)
             except IOError:
-                font = ImageFont.load_default()
+                try:
+                    # Segunda tentativa: caminho específico do macOS
+                    font = ImageFont.truetype("/Library/Fonts/Arial.ttf", 16)
+                except IOError:
+                    try:
+                        # Terceira tentativa: caminho específico do Windows
+                        font = ImageFont.truetype("C:\\Windows\\Fonts\\arial.ttf", 16)
+                    except IOError:
+                        # Fallback final: usar a fonte padrão do Pillow
+                        font = ImageFont.load_default()
+
         
             bbox = draw.textbbox((0, 0), qr_text, font=font)
             text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
