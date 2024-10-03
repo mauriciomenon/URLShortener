@@ -6,14 +6,15 @@ import pyshorteners.shorteners.tinyurl
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox, QCheckBox
-from PyQt6.QtGui import QPixmap, QClipboard
+from PyQt6.QtGui import QPixmap, QClipboard, QImage
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
+import io
 
 class URLShortenerApp(QWidget):
     def __init__(self):
         super().__init__()
-        
         self.initUI()
+        self.last_generated_qr = None
         
     def initUI(self):
         # Configurar o tema específico do Windows, cores suavizadas para estilo Windows 10
@@ -220,7 +221,6 @@ class URLShortenerApp(QWidget):
         long_url = self.url_input.text()
         print(f"URL Digitada: {long_url}")
 
-        # Exibir mensagem temporária na interface
         self.show_temporary_message("Encurtando...")
 
         short_url = self.get_short_url(long_url)
@@ -235,28 +235,27 @@ class URLShortenerApp(QWidget):
             self.alt_short_url_output.repaint()
             print(f"URL Encurtada Alternativa: {alt_short_url}")
 
-            # Copiar automaticamente para a área de transferência
             self.copy_to_clipboard()
 
-            # Gerar QR Code
-            qr_image_path = self.generate_qr_code(long_url)
+            qr_image = self.generate_qr_code(long_url)
             self.url_input.clear()
 
-            # Obter timestamp do momento de geração
             timestamp = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
 
-            # Atualizar histórico (inverter ordem para o mais recente no topo)
             self.history_table.insertRow(0)
             self.history_table.setItem(0, 0, QTableWidgetItem(long_url))
             self.history_table.setItem(0, 1, QTableWidgetItem(short_url))
             self.history_table.setItem(0, 2, QTableWidgetItem(alt_short_url))
             self.history_table.setItem(0, 4, QTableWidgetItem(timestamp))
 
-            # Adicionar QR Code na tabela
-            qr_pixmap = QPixmap(qr_image_path).scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatio)
+            qr_pixmap = self.pil_image_to_qpixmap(qr_image)
             qr_label = QLabel()
-            qr_label.setPixmap(qr_pixmap)
+            qr_label.setPixmap(qr_pixmap.scaled(150, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
             self.history_table.setCellWidget(0, 3, qr_label)
+
+            # Atualizar o QR code principal
+            self.qr_code_label.setPixmap(qr_pixmap.scaled(155, 155, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+
 
     def update_qr_text_visibility(self, state):
         self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
@@ -297,7 +296,7 @@ class URLShortenerApp(QWidget):
                     pixmap = qr_label.pixmap()
                     if pixmap and not pixmap.isNull():
                         clipboard = QApplication.clipboard()
-                        clipboard.setPixmap(pixmap)
+                        clipboard.setPixmap(pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
     def get_short_url(self, long_url):
         try:
@@ -326,10 +325,10 @@ class URLShortenerApp(QWidget):
         print(f"Copiado para área de transferência (alternativo): {self.alt_short_url_output.text()}")
 
     def copy_qr_code_to_clipboard(self):
-        clipboard = QApplication.clipboard()
-        pixmap = QPixmap("qrcode.png")
-        if not pixmap.isNull():
-            clipboard.setPixmap(pixmap)
+        if self.last_generated_qr:
+            clipboard = QApplication.clipboard()
+            qr_pixmap = self.pil_image_to_qpixmap(self.last_generated_qr)
+            clipboard.setPixmap(qr_pixmap)
 
     def generate_qr_code(self, url):
         qr = qrcode.QRCode(
@@ -341,36 +340,34 @@ class URLShortenerApp(QWidget):
         qr.add_data(url)
         qr.make(fit=True)
 
-        # Gerar a imagem do QR Code
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
         
-        # Criar uma nova imagem maior para acomodar o texto abaixo do QR Code
-        new_height = img.size[1] + 30
+        new_height = img.size[1] + 50
         new_img = Image.new("RGB", (img.size[0], new_height), (255, 255, 255))
         new_img.paste(img, (0, 0))
 
-        # Adicionar o texto abaixo do QR Code
         draw = ImageDraw.Draw(new_img)
         qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
         if qr_text:
             try:
-                font = ImageFont.truetype("arial.ttf", 22)
+                font = ImageFont.truetype("arial.ttf", 32)
             except IOError:
                 font = ImageFont.load_default()
         
             bbox = draw.textbbox((0, 0), qr_text, font=font)
             text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            position = ((new_img.size[0] - text_width) // 2, img.size[1] + 2)
+            position = ((new_img.size[0] - text_width) // 2, img.size[1] + 10)
             draw.text(position, qr_text, fill=(0, 0, 0), font=font)
 
-        qr_image_path = "qrcode.png"
-        new_img.save(qr_image_path, quality=95)
+        self.last_generated_qr = new_img
+        return new_img
+    
+    def pil_image_to_qpixmap(self, pil_image):
+        bytes_io = io.BytesIO()
+        pil_image.save(bytes_io, 'PNG')
+        bytes_io.seek(0)
+        return QPixmap.fromImage(QImage.fromData(bytes_io.getvalue()))
 
-        if QApplication.instance() is not None:
-            pixmap = QPixmap(qr_image_path).scaled(150, 200, Qt.AspectRatioMode.KeepAspectRatio)
-            self.qr_code_label.setPixmap(pixmap)
-
-        return qr_image_path
 
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
