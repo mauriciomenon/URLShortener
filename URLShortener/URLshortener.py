@@ -1,5 +1,5 @@
 # Mauricio Menon (+AI) 02102024
-import sys
+import sys, os
 import pyshorteners
 import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl
@@ -9,12 +9,27 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLa
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 import io
+import platform
 
 class URLShortenerApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
         self.last_generated_qr = None
+        
+    def show_about_dialog(self):
+        about_msg = QMessageBox(self)
+        about_msg.setWindowTitle("About")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.4\n03-10-2024")
+        about_msg.setGeometry(50, 50, 150, 100)
+        about_msg.exec()   
+        
+    def update_datetime(self):
+        try:
+            current_datetime = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
+            self.datetime_label.setText(current_datetime)
+        except Exception as e:
+            print(f"Erro atualizando data/hora: {e}") 
         
     def initUI(self):
         # Configurar o tema específico do Windows, cores suavizadas para estilo Windows 10
@@ -82,11 +97,13 @@ class URLShortenerApp(QWidget):
         url_input_layout = QHBoxLayout()
         url_input_label = QLabel("URL Original:")
         url_input_label.setFixedWidth(150)
+        
         self.url_input = QLineEdit(self)
         self.url_input.setPlaceholderText("Entre a URL a ser encurtada")
         self.url_input.setMinimumHeight(30)
         self.url_input.setFixedWidth(input_width)
         self.url_input.returnPressed.connect(self.shorten_url)
+        
         shorten_button = QPushButton("Encurtar", self)
         shorten_button.setFixedSize(button_size)
         shorten_button.clicked.connect(self.shorten_url)
@@ -101,7 +118,7 @@ class URLShortenerApp(QWidget):
         qr_text_label.setFixedWidth(150)
         self.qr_text_input = QLineEdit(self)
         self.qr_text_input.setPlaceholderText("Texto abaixo do QR Code")
-        self.qr_text_input.setText("TJSP - Link para entrar na reunião")
+        self.qr_text_input.setText("TJSP - Link Teams")
         self.qr_text_input.setFixedWidth(input_width)
         self.qr_text_input.setMinimumHeight(30)
         qr_text_checkbox = QCheckBox("Mostrar no QR", self)
@@ -174,6 +191,7 @@ class URLShortenerApp(QWidget):
         self.history_table = QTableWidget(self)
         self.history_table.setColumnCount(5)
         self.history_table.setHorizontalHeaderLabels(["URL Original", "URL Encurtada", "URL Alternativa", "QR Code", "Timestamp"])
+
         self.history_table.horizontalHeader().setStretchLastSection(True)
         self.history_table.setColumnWidth(0, 400)
         self.history_table.setColumnWidth(1, 225)
@@ -333,67 +351,67 @@ class URLShortenerApp(QWidget):
             clipboard.setPixmap(qr_pixmap)
 
     def generate_qr_code(self, url):
+        # Gerar o QR Code com um tamanho fixo
         qr = qrcode.QRCode(
-            version=1,
+            version=1,  # Tamanho fixo (versão 1)
             error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=10,
-            border=4,
+            box_size=10,  # Tamanho dos "pixels" do QR Code
+            border=4,     # Margem do QR Code
         )
         qr.add_data(url)
         qr.make(fit=True)
 
+        # Gerar a imagem do QR Code e redimensionar para um tamanho fixo (250x250 pixels)
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
-        
+        fixed_size = (250, 250)
+        img = img.resize(fixed_size, Image.ANTIALIAS)
+
+        # Criar uma nova imagem para adicionar o texto abaixo do QR Code
         new_height = img.size[1] + 50
         new_img = Image.new("RGB", (img.size[0], new_height), (255, 255, 255))
         new_img.paste(img, (0, 0))
 
         draw = ImageDraw.Draw(new_img)
         qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
+
         if qr_text:
+            # Ajustar o tamanho da fonte dependendo do sistema operacional
+            if platform.system() == "Windows":
+                font_size = 16  # Tamanho ajustado para Windows
+            else:
+                font_size = 16  # Tamanho ajustado para macOS
+
             try:
                 # Primeira tentativa: carregar Arial pelo nome genérico
-                font = ImageFont.truetype("arial.ttf", 32)
+                font = ImageFont.truetype("arial.ttf", font_size)
             except IOError:
                 try:
                     # Segunda tentativa: caminho específico do macOS
-                    font = ImageFont.truetype("/Library/Fonts/Arial.ttf", 16)
+                    font = ImageFont.truetype("/Library/Fonts/Arial.ttf", font_size)
                 except IOError:
                     try:
                         # Terceira tentativa: caminho específico do Windows
-                        font = ImageFont.truetype("C:\\Windows\\Fonts\\arial.ttf", 16)
+                        font = ImageFont.truetype("C:\\Windows\\Fonts\\arial.ttf", font_size)
                     except IOError:
                         # Fallback final: usar a fonte padrão do Pillow
                         font = ImageFont.load_default()
 
-        
+            # Centralizar o texto na parte inferior do QR Code
             bbox = draw.textbbox((0, 0), qr_text, font=font)
             text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
             position = ((new_img.size[0] - text_width) // 2, img.size[1] + 10)
             draw.text(position, qr_text, fill=(0, 0, 0), font=font)
 
+        # Armazenar o QR Code gerado para uso posterior
         self.last_generated_qr = new_img
         return new_img
     
     def pil_image_to_qpixmap(self, pil_image):
         bytes_io = io.BytesIO()
         pil_image.save(bytes_io, 'PNG', quality=100)  # Aumentada a qualidade
-        bytes_io.seek(0)
+        bytes_io.seek(0)        
         return QPixmap.fromImage(QImage.fromData(bytes_io.getvalue(), 'PNG'))
 
-    def show_about_dialog(self):
-        about_msg = QMessageBox(self)
-        about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.13\n02-10-2024")
-        about_msg.setGeometry(50, 50, 150, 100)
-        about_msg.exec()
-
-    def update_datetime(self):
-        try:
-            current_datetime = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
-            self.datetime_label.setText(current_datetime)
-        except Exception as e:
-            print(f"Erro atualizando data/hora: {e}")
 
 def main():
     app = QApplication(sys.argv)
