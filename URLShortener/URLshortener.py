@@ -238,24 +238,26 @@ class URLShortenerApp(QWidget):
             self.copy_to_clipboard()
 
             qr_image = self.generate_qr_code(long_url)
+            qr_pixmap = self.pil_image_to_qpixmap(qr_image)
+
+            # Atualizar o QR code principal
+            self.qr_code_label.setPixmap(qr_pixmap)
+
             self.url_input.clear()
 
             timestamp = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
 
+            # Adicionar ao histórico
             self.history_table.insertRow(0)
             self.history_table.setItem(0, 0, QTableWidgetItem(long_url))
             self.history_table.setItem(0, 1, QTableWidgetItem(short_url))
             self.history_table.setItem(0, 2, QTableWidgetItem(alt_short_url))
             self.history_table.setItem(0, 4, QTableWidgetItem(timestamp))
 
-            qr_pixmap = self.pil_image_to_qpixmap(qr_image)
+            # Usar o mesmo QR code no histórico sem redimensionamento
             qr_label = QLabel()
-            qr_label.setPixmap(qr_pixmap.scaled(150, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            qr_label.setPixmap(qr_pixmap)
             self.history_table.setCellWidget(0, 3, qr_label)
-
-            # Atualizar o QR code principal
-            self.qr_code_label.setPixmap(qr_pixmap.scaled(155, 155, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-
 
     def update_qr_text_visibility(self, state):
         self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
@@ -296,7 +298,7 @@ class URLShortenerApp(QWidget):
                     pixmap = qr_label.pixmap()
                     if pixmap and not pixmap.isNull():
                         clipboard = QApplication.clipboard()
-                        clipboard.setPixmap(pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                        clipboard.setPixmap(pixmap)
 
     def get_short_url(self, long_url):
         try:
@@ -364,10 +366,9 @@ class URLShortenerApp(QWidget):
     
     def pil_image_to_qpixmap(self, pil_image):
         bytes_io = io.BytesIO()
-        pil_image.save(bytes_io, 'PNG')
+        pil_image.save(bytes_io, 'PNG', quality=100)  # Aumentada a qualidade
         bytes_io.seek(0)
-        return QPixmap.fromImage(QImage.fromData(bytes_io.getvalue()))
-
+        return QPixmap.fromImage(QImage.fromData(bytes_io.getvalue(), 'PNG'))
 
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
