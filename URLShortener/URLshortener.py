@@ -37,7 +37,7 @@ class URLShortenerApp(QWidget):
             QWidget {
                 background-color: #e6e6e6;
                 font-family: 'Arial';
-                font-size: 10pt;
+                font-size: 12pt;
             }
             QPushButton {
                 background-color: #0078d7;
@@ -53,15 +53,15 @@ class URLShortenerApp(QWidget):
                 border: 1px solid #bfbfbf;
                 padding: 4px;
                 border-radius: 4px;
-                font-size: 10pt;
+                font-size: 12pt;
                 color: #000000;
             }
             QLabel {
-                font-size: 10pt;
+                font-size: 12pt;
                 color: #000000;
             }
             QCheckBox {
-                font-size: 10pt;
+                font-size: 12pt;
                 color: #000000;
             }
             QHeaderView::section {
@@ -73,7 +73,7 @@ class URLShortenerApp(QWidget):
                 background-color: #ffffff;
                 color: #000000;
                 gridline-color: #c0c0c0;
-                font-size: 10pt;
+                font-size: 12pt;
             }
         """)
 
