@@ -205,7 +205,9 @@ class URLShortenerApp(QWidget):
         self.history_table.setColumnWidth(3, 60)
         self.history_table.setColumnWidth(4, 100)
         self.history_table.setMinimumHeight(350)
-        #self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        # Conectar a seleção da tabela à função que carrega os dados nos campos
+        self.history_table.itemSelectionChanged.connect(self.load_from_history)
 
         # Configuração do menu de contexto para a tabela de histórico
         self.history_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -287,6 +289,28 @@ class URLShortenerApp(QWidget):
             qr_label = QLabel()
             qr_label.setPixmap(qr_pixmap_display)
             self.history_table.setCellWidget(0, 3, qr_label)
+
+    def load_from_history(self):
+        selected_items = self.history_table.selectedItems()
+        if not selected_items:
+            return
+
+        row = selected_items[0].row()
+
+        # Recuperar dados do histórico
+        long_url = self.history_table.item(row, 0).text()
+        short_url = self.history_table.item(row, 1).text()
+        alt_short_url = self.history_table.item(row, 2).text()
+
+        # Atualizar os campos da interface
+        self.url_input.setText(long_url)
+        self.short_url_output.setText(short_url)
+        self.alt_short_url_output.setText(alt_short_url)
+
+        # Regerar o QR Code com base na URL original
+        qr_image_display = self.generate_qr_code_for_display(long_url)
+        qr_pixmap_display = self.pil_image_to_qpixmap(qr_image_display)
+        self.qr_code_label.setPixmap(qr_pixmap_display)
 
 
     def update_qr_text_visibility(self, state):
@@ -435,6 +459,7 @@ class URLShortenerApp(QWidget):
         img = img.resize(display_size, Image.LANCZOS)
 
         return img
+
 
     
     
