@@ -14,8 +14,8 @@ chrome_options.add_argument("--profile-directory=Default")  # Substituir se voc�
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
 
 # URL da reunião do Teams
-meeting_url = "https://teams.microsoft.com/l/meetup-join/19%3Ameeting_NWQ5MmUyZWQtMjIwYy00YzU1LWE4YmUtZDA3NjM4OTU2MDg1%40thread.v2/0?context=%7B%22Tid%22%3A%223590422d-8e59-4036-9245-d6edd8cc0f7a%22%2C%22Oid%22%3A%22fe62638f-2f4f-41cc-b20f-dc91c9c4250d%22%7D"
-
+#meeting_url = "https://teams.microsoft.com/l/meetup-join/19%3Ameeting_NWQ5MmUyZWQtMjIwYy00YzU1LWE4YmUtZDA3NjM4OTU2MDg1%40thread.v2/0?context=%7B%22Tid%22%3A%223590422d-8e59-4036-9245-d6edd8cc0f7a%22%2C%22Oid%22%3A%22fe62638f-2f4f-41cc-b20f-dc91c9c4250d%22%7D"
+meeting_url = "https://teams.microsoft.com/l/meetup-join/19%3a663835a62f3f4662bf6577467faeb993%40thread.tacv2/1610834377647?context=%7b%22Tid%22%3a%2230b1e5ea-e05e-4a77-99d3-a3c62c328784%22%2c%22Oid%22%3a%227355f150-d4d3-4e4c-9800-bdcedf2ff88c%22%7d"
 try:
     # Abrir o navegador e acessar a página da reunião
     driver.get(meeting_url)
