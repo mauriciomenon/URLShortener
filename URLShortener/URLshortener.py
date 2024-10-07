@@ -20,7 +20,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.4\n03-10-2024")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.5\n07-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()   
         
@@ -32,49 +32,55 @@ class URLShortenerApp(QWidget):
             print(f"Erro atualizando data/hora: {e}") 
         
     def initUI(self):
+        # Detectar sistema operacional para definir o tamanho da fonte
+        if platform.system() == "Windows":
+            font_size = "10pt"
+        else:
+            font_size = "12pt"
+
         # Configurar o tema específico do Windows, cores suavizadas para estilo Windows 10
-        self.setStyleSheet("""
-            QWidget {
+        self.setStyleSheet(f"""
+            QWidget {{
                 background-color: #e6e6e6;
                 font-family: 'Arial';
-                font-size: 12pt;
-            }
-            QPushButton {
+                font-size: {font_size};
+            }}
+            QPushButton {{
                 background-color: #0078d7;
                 color: #ffffff;
                 border-radius: 4px;
                 padding: 6px;
-            }
-            QPushButton:hover {
+            }}
+            QPushButton:hover {{
                 background-color: #005a9e;
-            }
-            QLineEdit {
+            }}
+            QLineEdit {{
                 background-color: #ffffff;
                 border: 1px solid #bfbfbf;
                 padding: 4px;
                 border-radius: 4px;
-                font-size: 12pt;
+                font-size: {font_size};
                 color: #000000;
-            }
-            QLabel {
-                font-size: 12pt;
+            }}
+            QLabel {{
+                font-size: {font_size};
                 color: #000000;
-            }
-            QCheckBox {
-                font-size: 12pt;
+            }}
+            QCheckBox {{
+                font-size: {font_size};
                 color: #000000;
-            }
-            QHeaderView::section {
+            }}
+            QHeaderView::section {{
                 background-color: #0078d7;
                 color: #ffffff;
                 font-weight: bold;
-            }
-            QTableWidget {
+            }}
+            QTableWidget {{
                 background-color: #ffffff;
                 color: #000000;
                 gridline-color: #c0c0c0;
-                font-size: 12pt;
-            }
+                font-size: {font_size};
+            }}
         """)
 
         self.setWindowTitle('URL Shortener')
@@ -255,11 +261,16 @@ class URLShortenerApp(QWidget):
 
             self.copy_to_clipboard()
 
-            qr_image = self.generate_qr_code(long_url)
-            qr_pixmap = self.pil_image_to_qpixmap(qr_image)
+            # Gerar QR Code para ser exibido na GUI
+            qr_image_display = self.generate_qr_code_for_display(long_url)
+            qr_pixmap_display = self.pil_image_to_qpixmap(qr_image_display)
 
-            # Atualizar o QR code principal
-            self.qr_code_label.setPixmap(qr_pixmap)
+            # Atualizar o QR Code principal exibido na GUI
+            self.qr_code_label.setPixmap(qr_pixmap_display)
+
+            # Gerar QR Code para ser guardado e copiado
+            qr_image = self.generate_qr_code(long_url)
+            self.last_generated_qr = qr_image  # Guardar para ser usado posteriormente
 
             self.url_input.clear()
 
@@ -274,8 +285,9 @@ class URLShortenerApp(QWidget):
 
             # Usar o mesmo QR code no histórico sem redimensionamento
             qr_label = QLabel()
-            qr_label.setPixmap(qr_pixmap)
+            qr_label.setPixmap(qr_pixmap_display)
             self.history_table.setCellWidget(0, 3, qr_label)
+
 
     def update_qr_text_visibility(self, state):
         self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
@@ -365,7 +377,6 @@ class URLShortenerApp(QWidget):
         img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
         fixed_size = (250, 250)
         img = img.resize(fixed_size, Image.LANCZOS)
-        #img = img.resize(fixed_size, Image.ANTIALIAS)
 
         # Criar uma nova imagem para adicionar o texto abaixo do QR Code
         new_height = img.size[1] + 50
@@ -406,7 +417,25 @@ class URLShortenerApp(QWidget):
         # Armazenar o QR Code gerado para uso posterior
         self.last_generated_qr = new_img
         return new_img
-    
+
+    def generate_qr_code_for_display(self, url):
+        # Gerar um QR Code para exibição na tela
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=6,  # Tamanho reduzido para melhor exibição na GUI
+            border=2,    # Margem menor para adequar ao espaço da GUI
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+
+        # Gerar a imagem do QR Code e redimensionar para o tamanho da exibição
+        img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+        display_size = (150, 150)  # Tamanho menor para visualização na interface gráfica
+        img = img.resize(display_size, Image.LANCZOS)
+
+        return img
+
     
     
     def pil_image_to_qpixmap(self, pil_image):
