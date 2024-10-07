@@ -3,8 +3,8 @@ import sys, os
 import pyshorteners
 import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl
-import qrcode
 from PIL import Image, ImageDraw, ImageFont
+import qrcode
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox, QCheckBox
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
