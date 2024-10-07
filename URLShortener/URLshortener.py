@@ -407,6 +407,8 @@ class URLShortenerApp(QWidget):
         self.last_generated_qr = new_img
         return new_img
     
+    
+    
     def pil_image_to_qpixmap(self, pil_image):
         bytes_io = io.BytesIO()
         pil_image.save(bytes_io, 'PNG', quality=100)  # Aumentada a qualidade
