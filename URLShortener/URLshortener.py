@@ -16,33 +16,35 @@ class URLShortenerApp(QWidget):
         super().__init__()
         self.initUI()
         self.last_generated_qr = None
-        
+
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
         about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6\n07-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()   
-        
+
     def update_datetime(self):
         try:
             current_datetime = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
             self.datetime_label.setText(current_datetime)
         except Exception as e:
             print(f"Erro atualizando data/hora: {e}") 
-        
+
     def initUI(self):
         # Detectar sistema operacional para definir o tamanho da fonte
         if platform.system() == "Windows":
             font_size = "10pt"
+            font_name = "Segoe UI"
         else:
             font_size = "12pt"
+            font_name = "Arial"
 
         # Configurar o tema específico do Windows, cores suavizadas para estilo Windows 10
         self.setStyleSheet(f"""
             QWidget {{
                 background-color: #e6e6e6;
-                font-family: 'Arial';
+                font-family: {font_name};
                 font-size: {font_size};
             }}
             QPushButton {{
@@ -103,13 +105,13 @@ class URLShortenerApp(QWidget):
         url_input_layout = QHBoxLayout()
         url_input_label = QLabel("URL Original:")
         url_input_label.setFixedWidth(150)
-        
+
         self.url_input = QLineEdit(self)
         self.url_input.setPlaceholderText("Entre a URL a ser encurtada")
         self.url_input.setMinimumHeight(30)
         self.url_input.setFixedWidth(input_width)
         self.url_input.returnPressed.connect(self.shorten_url)
-        
+
         shorten_button = QPushButton("Encurtar", self)
         shorten_button.setFixedSize(button_size)
         shorten_button.clicked.connect(self.shorten_url)
@@ -199,10 +201,10 @@ class URLShortenerApp(QWidget):
         self.history_table.setHorizontalHeaderLabels(["URL Original", "URL Encurtada", "URL Alternativa", "QR Code", "Timestamp"])
 
         self.history_table.horizontalHeader().setStretchLastSection(True)
-        self.history_table.setColumnWidth(0, 400)
+        self.history_table.setColumnWidth(0, 380)
         self.history_table.setColumnWidth(1, 225)
         self.history_table.setColumnWidth(2, 225)
-        self.history_table.setColumnWidth(3, 60)
+        self.history_table.setColumnWidth(3, 80)
         self.history_table.setColumnWidth(4, 100)
         self.history_table.setMinimumHeight(350)
 
@@ -312,7 +314,6 @@ class URLShortenerApp(QWidget):
         qr_pixmap_display = self.pil_image_to_qpixmap(qr_image_display)
         self.qr_code_label.setPixmap(qr_pixmap_display)
 
-
     def update_qr_text_visibility(self, state):
         self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
 
@@ -323,7 +324,7 @@ class URLShortenerApp(QWidget):
         self.temp_message.setFixedSize(200, 50)
         self.temp_message.move((self.width() - self.temp_message.width()) // 2, (self.height() - self.temp_message.height()) // 2)
         self.temp_message.show()
-        
+
         QTimer.singleShot(timeout, self.temp_message.close)
 
     def show_context_menu_history(self, position):
@@ -460,9 +461,6 @@ class URLShortenerApp(QWidget):
 
         return img
 
-
-    
-    
     def pil_image_to_qpixmap(self, pil_image):
         bytes_io = io.BytesIO()
         pil_image.save(bytes_io, 'PNG', quality=100)  # Aumentada a qualidade
