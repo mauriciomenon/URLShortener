@@ -1,9 +1,11 @@
-# Mauricio Menon (+AI) 07102024
+# Mauricio Menon (+AI) 10102024
 import sys, os
 import pyshorteners
 import pyshorteners.shorteners
 import pyshorteners.shorteners.tinyurl
+from pyshorteners.exceptions import ShorteningErrorException
 from PIL import Image, ImageDraw, ImageFont
+import logging
 import qrcode
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox, QCheckBox
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
@@ -364,12 +366,26 @@ class URLShortenerApp(QWidget):
             return f"Error: {e}"
 
     def get_alt_short_url(self, long_url):
+        logging.debug(f"Attempting to shorten URL: {long_url}")
         try:
-            type_isgd = pyshorteners.Shortener().isgd
-            alt_short_url = type_isgd.short(long_url)
+            type_osdb = pyshorteners.Shortener()
+            logging.debug(f"Shortener attributes: {dir(type_osdb)}")
+
+            if hasattr(type_osdb, "osdb"):
+                logging.debug("OSDB attribute found. Attempting to shorten URL.")
+                alt_short_url = type_osdb.osdb.short(long_url)
+                logging.debug(f"URL shortened successfully: {alt_short_url}")
+            else:
+                logging.warning("OSDB attribute not found in Shortener object.")
+                alt_short_url = "Serviço OSDB não disponível"
+
             return alt_short_url
+        except ShorteningErrorException as e:
+            logging.error(f"ShorteningErrorException occurred: {str(e)}")
+            return f"Erro de encurtamento: {str(e)}"
         except Exception as e:
-            return f"Error: {e}"
+            logging.error(f"Unexpected error occurred: {str(e)}")
+            return f"Erro: {str(e)}"
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
@@ -469,6 +485,7 @@ class URLShortenerApp(QWidget):
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     app = QApplication(sys.argv)
     window = URLShortenerApp()
     window.show()
