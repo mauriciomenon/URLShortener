@@ -1,0 +1,3 @@
+nao foi usado arquivo ponto spec e sim diretamente CLI:
+
+ pyinstaller --onedir --icon=C:\Users\menon\git\URLShortener\URLShortener\7208695.ico --noconsole URLShortener.py
