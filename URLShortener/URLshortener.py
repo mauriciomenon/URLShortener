@@ -1,22 +1,80 @@
 # Mauricio Menon (+AI) 10102024
-import sys, os
-import pyshorteners
-import pyshorteners.shorteners
-import pyshorteners.shorteners.tinyurl
-from pyshorteners.exceptions import ShorteningErrorException
-from PIL import Image, ImageDraw, ImageFont
-import logging
-import qrcode
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QMessageBox, QCheckBox
-from PyQt6.QtGui import QPixmap, QClipboard, QImage
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
+# Imports padrão do Python
+import sys
+import os
 import io
 import platform
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Imports de terceiros
+import requests
+from requests.exceptions import RequestException
+import pyshorteners
+from pyshorteners.exceptions import ShorteningErrorException
+from pyshorteners.shorteners import osdb, isgd, dagd, clckru
+from PIL import Image, ImageDraw, ImageFont
+import qrcode
+
+# Imports PyQt6
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QMenu,
+    QMessageBox,
+    QCheckBox,
+)
+from PyQt6.QtGui import QPixmap, QClipboard, QImage
+from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
+
+
+def setup_logging(
+    log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=3
+):
+    # Certifique-se de que o diretório do log existe
+    log_dir = os.path.dirname(log_file)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Configurar o formato do log
+    log_formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # Configurar o handler de arquivo rotacional
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=max_log_size, backupCount=backup_count
+    )
+    file_handler.setFormatter(log_formatter)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Configurar o handler de console
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(log_formatter)
+    console_handler.setLevel(logging.INFO)
+
+    # Configurar o logger raiz
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+
+    logging.info("Logging configurado com sucesso.")
+
 
 class URLShortenerApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        logging.info("URLShortenerApp iniciado")
         self.last_generated_qr = None
 
     def show_about_dialog(self):
@@ -41,6 +99,7 @@ class URLShortenerApp(QWidget):
         else:
             font_size = "12pt"
             font_name = "Arial"
+        logging.debug("Interface do usuário inicializada")
 
         # Configurar o tema específico do Windows, cores suavizadas para estilo Windows 10
         self.setStyleSheet(f"""
@@ -358,34 +417,74 @@ class URLShortenerApp(QWidget):
                         clipboard.setPixmap(pixmap)
 
     def get_short_url(self, long_url):
-        try:
-            type_tiny = pyshorteners.Shortener(timeout=10)
-            short_url = type_tiny.tinyurl.short(long_url)
+        logging.debug(f"Tentando encurtar URL: {long_url}")
+
+        # Função auxiliar para fazer a requisição
+        def try_shorten(protocol):
+            url = f"{protocol}://tinyurl.com/api-create.php"
+            try:
+                response = requests.get(url, params={"url": long_url}, timeout=10)
+                response.raise_for_status()
+                return response.text.strip()
+            except requests.RequestException as e:
+                logging.warning(f"Falha ao encurtar com {protocol}: {str(e)}")
+                return None
+
+        # Tenta HTTPS primeiro
+        logging.debug("Tentando conexão HTTPS com TinyURL")
+        short_url = try_shorten("https")
+
+        # Se HTTPS falhar, tenta HTTP
+        if not short_url:
+            logging.debug("HTTPS falhou. Tentando conexão HTTP com TinyURL")
+            short_url = try_shorten("http")
+
+        if short_url:
+            logging.info(f"URL encurtada com sucesso usando TinyURL: {short_url}")
             return short_url
-        except Exception as e:
-            return f"Error: {e}"
+        else:
+            error_msg = "Não foi possível encurtar a URL com TinyURL"
+            logging.error(error_msg)
+            return error_msg
 
     def get_alt_short_url(self, long_url):
-        logging.debug(f"Attempting to shorten URL: {long_url}")
-        try:
-            type_osdb = pyshorteners.Shortener()
-            logging.debug(f"Shortener attributes: {dir(type_osdb)}")
+        logging.debug(f"Tentando encurtar URL com serviços alternativos: {long_url}")
+        shortener = pyshorteners.Shortener(timeout=10)
+        available_services = [
+            service
+            for service in ["osdb", "isgd", "dagd", "clckru"]
+            if hasattr(shortener, service)
+        ]
 
-            if hasattr(type_osdb, "osdb"):
-                logging.debug("OSDB attribute found. Attempting to shorten URL.")
-                alt_short_url = type_osdb.osdb.short(long_url)
-                logging.debug(f"URL shortened successfully: {alt_short_url}")
-            else:
-                logging.warning("OSDB attribute not found in Shortener object.")
-                alt_short_url = "Serviço OSDB não disponível"
+        for service in available_services:
+            try:
+                short_method = getattr(shortener, service)
+                # Tenta primeiro com HTTPS
+                try:
+                    alt_short_url = short_method.short(long_url)
+                    logging.info(
+                        f"URL encurtada com sucesso usando {service} (HTTPS): {alt_short_url}"
+                    )
+                    return alt_short_url
+                except Exception as e:
+                    logging.warning(
+                        f"Falha ao usar HTTPS para {service}: {str(e)}. Tentando HTTP."
+                    )
 
-            return alt_short_url
-        except ShorteningErrorException as e:
-            logging.error(f"ShorteningErrorException occurred: {str(e)}")
-            return f"Erro de encurtamento: {str(e)}"
-        except Exception as e:
-            logging.error(f"Unexpected error occurred: {str(e)}")
-            return f"Erro: {str(e)}"
+                # Se HTTPS falhar, tenta com HTTP
+                if hasattr(short_method, "api_url"):
+                    original_url = short_method.api_url
+                    short_method.api_url = original_url.replace("https://", "http://")
+                    alt_short_url = short_method.short(long_url)
+                    logging.info(
+                        f"URL encurtada com sucesso usando {service} (HTTP): {alt_short_url}"
+                    )
+                    return alt_short_url
+            except Exception as e:
+                logging.error(f"Erro ao usar o serviço {service}: {str(e)}")
+
+        logging.error("Todos os serviços alternativos de encurtamento falharam.")
+        return "Não foi possível encurtar a URL com serviços alternativos."
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
@@ -485,11 +584,15 @@ class URLShortenerApp(QWidget):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    # Configurar o logging
+    setup_logging()
+
+    logging.info("Iniciando aplicação URLShortener")
     app = QApplication(sys.argv)
     window = URLShortenerApp()
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

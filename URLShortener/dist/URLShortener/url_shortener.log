@@ -1,0 +1,22 @@
+2024-10-10 16:22:06 - INFO - Logging configurado com sucesso.
+2024-10-10 16:22:06 - INFO - Iniciando aplicação URLShortener
+2024-10-10 16:22:07 - DEBUG - Interface do usuário inicializada
+2024-10-10 16:22:07 - INFO - URLShortenerApp iniciado
+2024-10-10 16:22:12 - DEBUG - Tentando encurtar URL: www.uol.com
+2024-10-10 16:22:12 - DEBUG - Tentando conexão HTTPS com TinyURL
+2024-10-10 16:22:12 - DEBUG - Starting new HTTPS connection (1): tinyurl.com:443
+2024-10-10 16:22:12 - DEBUG - https://tinyurl.com:443 "GET /api-create.php?url=www.uol.com HTTP/11" 200 None
+2024-10-10 16:22:12 - INFO - URL encurtada com sucesso usando TinyURL: https://tinyurl.com/r3qm
+2024-10-10 16:22:12 - DEBUG - Tentando encurtar URL com serviços alternativos: www.uol.com
+2024-10-10 16:22:12 - DEBUG - Starting new HTTPS connection (1): osdb.link:443
+2024-10-10 16:22:13 - DEBUG - https://osdb.link:443 "POST / HTTP/11" 200 None
+2024-10-10 16:22:13 - INFO - URL encurtada com sucesso usando osdb (HTTPS): http://osdb.link/qc33g
+2024-10-10 16:22:20 - DEBUG - Tentando encurtar URL: www.cnn.com.br
+2024-10-10 16:22:20 - DEBUG - Tentando conexão HTTPS com TinyURL
+2024-10-10 16:22:20 - DEBUG - Starting new HTTPS connection (1): tinyurl.com:443
+2024-10-10 16:22:22 - DEBUG - https://tinyurl.com:443 "GET /api-create.php?url=www.cnn.com.br HTTP/11" 200 None
+2024-10-10 16:22:22 - INFO - URL encurtada com sucesso usando TinyURL: https://tinyurl.com/2cg2hmlq
+2024-10-10 16:22:22 - DEBUG - Tentando encurtar URL com serviços alternativos: www.cnn.com.br
+2024-10-10 16:22:22 - DEBUG - Starting new HTTPS connection (1): osdb.link:443
+2024-10-10 16:22:22 - DEBUG - https://osdb.link:443 "POST / HTTP/11" 200 None
+2024-10-10 16:22:22 - INFO - URL encurtada com sucesso usando osdb (HTTPS): http://osdb.link/qc876
