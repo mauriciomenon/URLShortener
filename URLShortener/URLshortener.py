@@ -502,19 +502,20 @@ class URLShortenerApp(QWidget):
             qr_pixmap = self.pil_image_to_qpixmap(self.last_generated_qr)
             clipboard.setPixmap(qr_pixmap)
 
+
     def generate_qr_code(self, url):
         # Gerar o QR Code com um tamanho fixo
         qr = qrcode.QRCode(
             version=1,  # Tamanho fixo (versão 1)
             error_correction=qrcode.constants.ERROR_CORRECT_H,
             box_size=10,  # Tamanho dos "pixels" do QR Code
-            border=4,     # Margem do QR Code
+            border=4,  # Margem do QR Code
         )
         qr.add_data(url)
         qr.make(fit=True)
 
         # Gerar a imagem do QR Code e redimensionar para um tamanho fixo (250x250 pixels)
-        img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+        img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
         fixed_size = (250, 250)
         img = img.resize(fixed_size, Image.LANCZOS)
 
@@ -526,10 +527,11 @@ class URLShortenerApp(QWidget):
         draw = ImageDraw.Draw(new_img)
         qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
 
-        if qr_text:
+        # Adicionar o texto apenas se ele não estiver vazio
+        if qr_text.strip():
             # Ajustar o tamanho da fonte dependendo do sistema operacional
             if platform.system() == "Windows":
-                font_size = 16  # Tamanho ajustado para Windows
+                font_size = 14  # Tamanho ajustado para Windows
             else:
                 font_size = 16  # Tamanho ajustado para macOS
 
@@ -543,7 +545,9 @@ class URLShortenerApp(QWidget):
                 except IOError:
                     try:
                         # Terceira tentativa: caminho específico do Windows
-                        font = ImageFont.truetype("C:\\Windows\\Fonts\\arial.ttf", font_size)
+                        font = ImageFont.truetype(
+                            "C:\\Windows\\Fonts\\arial.ttf", font_size
+                        )
                     except IOError:
                         # Fallback final: usar a fonte padrão do Pillow
                         font = ImageFont.load_default()
