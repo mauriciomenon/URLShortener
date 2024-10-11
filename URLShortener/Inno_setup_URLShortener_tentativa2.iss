@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "URL Shortener"
-#define MyAppVersion "1.6"
+#define MyAppVersion "1.7"
 #define MyAppPublisher "Mauricio Menon"
 #define MyAppURL "https://github.com/mauriciomenon/"
 #define MyAppExeName "URLShortener.exe"

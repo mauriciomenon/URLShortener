@@ -190,15 +190,17 @@ class URLShortenerApp(QWidget):
         self.qr_text_input.setText("TJSP - Link Teams")
         self.qr_text_input.setFixedWidth(input_width)
         self.qr_text_input.setMinimumHeight(30)
-        qr_text_checkbox = QCheckBox("Mostrar no QR", self)
-        qr_text_checkbox.setChecked(True)
+
+        # Armazenar o QCheckBox em uma variável de instância
+        self.qr_text_checkbox = QCheckBox("Mostrar no QR", self)
+        self.qr_text_checkbox.setChecked(True)
         qr_text_layout.addWidget(qr_text_label)
         qr_text_layout.addWidget(self.qr_text_input)
-        qr_text_layout.addWidget(qr_text_checkbox)
+        qr_text_layout.addWidget(self.qr_text_checkbox)
         qr_text_layout.addStretch()
 
         # Conectar o checkbox à visibilidade do texto
-        qr_text_checkbox.stateChanged.connect(lambda state: self.update_qr_text_visibility(state))
+        self.qr_text_checkbox.stateChanged.connect(lambda state: self.update_qr_text_visibility(state))
 
         # Campo de saída para URL encurtada principal
         short_url_layout = QHBoxLayout()
@@ -326,12 +328,16 @@ class URLShortenerApp(QWidget):
 
             self.copy_to_clipboard()
 
-            # Gerar QR Code de alta resolução para ser guardado e copiado
-            qr_image = self.generate_qr_code(long_url)
-            self.last_generated_qr = qr_image  # Guardar para ser usado posteriormente
+            # Verificar se o checkbox "Mostrar no QR" está marcado para incluir o texto
+            show_text = self.qr_text_checkbox.isChecked()
 
-            # Converter o QR Code de alta resolução para QPixmap
-            qr_pixmap_display = self.pil_image_to_qpixmap(qr_image)
+            # Gerar QR Code de alta resolução com ou sem o texto
+            qr_image_high_res = self.generate_qr_code(long_url, show_text)
+            self.last_generated_qr = qr_image_high_res  # Guardar a versão de alta resolução
+
+            # Gerar QR Code em tamanho reduzido para exibição na interface
+            qr_image_display = self.generate_qr_code_for_display(long_url)
+            qr_pixmap_display = self.pil_image_to_qpixmap(qr_image_display)
 
             # Atualizar o QR Code principal exibido na GUI
             self.qr_code_label.setPixmap(qr_pixmap_display)
@@ -340,7 +346,7 @@ class URLShortenerApp(QWidget):
 
             timestamp = QDateTime.currentDateTime().toString("dd-MM-yyyy HH:mm:ss")
 
-            # Adicionar ao histórico
+            # Adicionar ao histórico com o QR Code de alta resolução
             self.history_table.insertRow(0)
             self.history_table.setItem(0, 0, QTableWidgetItem(long_url))
             self.history_table.setItem(0, 1, QTableWidgetItem(short_url))
@@ -349,7 +355,7 @@ class URLShortenerApp(QWidget):
 
             # Usar o QR Code de alta resolução no histórico
             qr_label = QLabel()
-            qr_label.setPixmap(qr_pixmap_display)
+            qr_label.setPixmap(self.pil_image_to_qpixmap(qr_image_high_res))
             self.history_table.setCellWidget(0, 3, qr_label)
 
     def load_from_history(self):
@@ -375,7 +381,8 @@ class URLShortenerApp(QWidget):
         self.qr_code_label.setPixmap(qr_pixmap_display)
 
     def update_qr_text_visibility(self, state):
-        self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
+        # self.qr_text_input.setEnabled(state == Qt.CheckState.Checked)
+        pass
 
     def show_temporary_message(self, message, timeout=2000):
         self.temp_message = QLabel(message, self)
@@ -501,7 +508,7 @@ class URLShortenerApp(QWidget):
             qr_pixmap = self.pil_image_to_qpixmap(self.last_generated_qr)
             clipboard.setPixmap(qr_pixmap)
 
-    def generate_qr_code(self, url):
+    def generate_qr_code(self, url, show_text):
         # Gerar o QR Code com um tamanho fixo
         qr = qrcode.QRCode(
             version=1,  # Tamanho fixo (versão 1)
@@ -523,38 +530,39 @@ class URLShortenerApp(QWidget):
         new_img.paste(img, (0, 0))
 
         draw = ImageDraw.Draw(new_img)
-        qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
 
-        # Adicionar o texto apenas se ele não estiver vazio
-        if qr_text.strip():
-            # Ajustar o tamanho da fonte dependendo do sistema operacional
-            if platform.system() == "Windows":
-                font_size = 14  # Tamanho ajustado para Windows
-            else:
-                font_size = 16  # Tamanho ajustado para macOS
+        # Adicionar o texto ao QR Code se o checkbox estiver marcado e o texto não estiver vazio
+        if show_text:
+            qr_text = self.qr_text_input.text().strip()
+            if qr_text:
+                # Ajustar o tamanho da fonte dependendo do sistema operacional
+                if platform.system() == "Windows":
+                    font_size = 14  # Tamanho ajustado para Windows
+                else:
+                    font_size = 16  # Tamanho ajustado para macOS
 
-            try:
-                # Primeira tentativa: carregar Arial pelo nome genérico
-                font = ImageFont.truetype("arial.ttf", font_size)
-            except IOError:
                 try:
-                    # Segunda tentativa: caminho específico do macOS
-                    font = ImageFont.truetype("/Library/Fonts/Arial.ttf", font_size)
+                    # Primeira tentativa: carregar Arial pelo nome genérico
+                    font = ImageFont.truetype("arial.ttf", font_size)
                 except IOError:
                     try:
-                        # Terceira tentativa: caminho específico do Windows
-                        font = ImageFont.truetype(
-                            "C:\\Windows\\Fonts\\arial.ttf", font_size
-                        )
+                        # Segunda tentativa: caminho específico do macOS
+                        font = ImageFont.truetype("/Library/Fonts/Arial.ttf", font_size)
                     except IOError:
-                        # Fallback final: usar a fonte padrão do Pillow
-                        font = ImageFont.load_default()
+                        try:
+                            # Terceira tentativa: caminho específico do Windows
+                            font = ImageFont.truetype(
+                                "C:\\Windows\\Fonts\\arial.ttf", font_size
+                            )
+                        except IOError:
+                            # Fallback final: usar a fonte padrão do Pillow
+                            font = ImageFont.load_default()
 
-            # Centralizar o texto na parte inferior do QR Code
-            bbox = draw.textbbox((0, 0), qr_text, font=font)
-            text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            position = ((new_img.size[0] - text_width) // 2, img.size[1] + 10)
-            draw.text(position, qr_text, fill=(0, 0, 0), font=font)
+                # Centralizar o texto na parte inferior do QR Code
+                bbox = draw.textbbox((0, 0), qr_text, font=font)
+                text_width, text_height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                position = ((new_img.size[0] - text_width) // 2, img.size[1] + 10)
+                draw.text(position, qr_text, fill=(0, 0, 0), font=font)
 
         # Armazenar o QR Code gerado para uso posterior
         self.last_generated_qr = new_img
