@@ -326,16 +326,15 @@ class URLShortenerApp(QWidget):
 
             self.copy_to_clipboard()
 
-            # Gerar QR Code para ser exibido na GUI
-            qr_image_display = self.generate_qr_code_for_display(long_url)
-            qr_pixmap_display = self.pil_image_to_qpixmap(qr_image_display)
+            # Gerar QR Code de alta resolução para ser guardado e copiado
+            qr_image = self.generate_qr_code(long_url)
+            self.last_generated_qr = qr_image  # Guardar para ser usado posteriormente
+
+            # Converter o QR Code de alta resolução para QPixmap
+            qr_pixmap_display = self.pil_image_to_qpixmap(qr_image)
 
             # Atualizar o QR Code principal exibido na GUI
             self.qr_code_label.setPixmap(qr_pixmap_display)
-
-            # Gerar QR Code para ser guardado e copiado
-            qr_image = self.generate_qr_code(long_url)
-            self.last_generated_qr = qr_image  # Guardar para ser usado posteriormente
 
             self.url_input.clear()
 
@@ -348,7 +347,7 @@ class URLShortenerApp(QWidget):
             self.history_table.setItem(0, 2, QTableWidgetItem(alt_short_url))
             self.history_table.setItem(0, 4, QTableWidgetItem(timestamp))
 
-            # Usar o mesmo QR code no histórico sem redimensionamento
+            # Usar o QR Code de alta resolução no histórico
             qr_label = QLabel()
             qr_label.setPixmap(qr_pixmap_display)
             self.history_table.setCellWidget(0, 3, qr_label)
@@ -501,7 +500,6 @@ class URLShortenerApp(QWidget):
             clipboard = QApplication.clipboard()
             qr_pixmap = self.pil_image_to_qpixmap(self.last_generated_qr)
             clipboard.setPixmap(qr_pixmap)
-
 
     def generate_qr_code(self, url):
         # Gerar o QR Code com um tamanho fixo
