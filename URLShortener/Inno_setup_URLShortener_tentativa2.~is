@@ -48,7 +48,25 @@ Source: "C:\Users\menon\git\URLShortener\URLShortener\dist\URLShortener\{#MyAppE
 Source: "C:\Users\menon\git\URLShortener\URLShortener\dist\URLShortener\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+[Dirs]
+;fazer um chmod 777 em uma pasta do sistema e inseguro
+;Name: "{app}"; Permissions: users-full
+
+[Code]
+procedure CreateLogFile();
+var
+  LogFile: string;
+begin
+  LogFile := ExpandConstant('{app}\url_shortener.log');
+  if not FileExists(LogFile) then
+  begin
+    SaveStringToFile(LogFile, '', False);
+  end;
+end;
+
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "Execute o programa"; Flags: postinstall

@@ -37,7 +37,7 @@ from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
 
 def setup_logging(
-    log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=3
+    log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=2
 ):
     # Certifique-se de que o diretório do log existe
     log_dir = os.path.dirname(log_file)
