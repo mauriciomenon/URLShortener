@@ -37,7 +37,7 @@ from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
 
 def setup_logging(
-    log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=3
+    log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=2
 ):
     # Certifique-se de que o diretório do log existe
     log_dir = os.path.dirname(log_file)
@@ -80,7 +80,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6\n07-10-2024")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6.1\n11-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()   
 
@@ -502,19 +502,20 @@ class URLShortenerApp(QWidget):
             qr_pixmap = self.pil_image_to_qpixmap(self.last_generated_qr)
             clipboard.setPixmap(qr_pixmap)
 
+
     def generate_qr_code(self, url):
         # Gerar o QR Code com um tamanho fixo
         qr = qrcode.QRCode(
             version=1,  # Tamanho fixo (versão 1)
             error_correction=qrcode.constants.ERROR_CORRECT_H,
             box_size=10,  # Tamanho dos "pixels" do QR Code
-            border=4,     # Margem do QR Code
+            border=4,  # Margem do QR Code
         )
         qr.add_data(url)
         qr.make(fit=True)
 
         # Gerar a imagem do QR Code e redimensionar para um tamanho fixo (250x250 pixels)
-        img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+        img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
         fixed_size = (250, 250)
         img = img.resize(fixed_size, Image.LANCZOS)
 
@@ -526,10 +527,11 @@ class URLShortenerApp(QWidget):
         draw = ImageDraw.Draw(new_img)
         qr_text = self.qr_text_input.text() if self.qr_text_input.isEnabled() else ""
 
-        if qr_text:
+        # Adicionar o texto apenas se ele não estiver vazio
+        if qr_text.strip():
             # Ajustar o tamanho da fonte dependendo do sistema operacional
             if platform.system() == "Windows":
-                font_size = 16  # Tamanho ajustado para Windows
+                font_size = 14  # Tamanho ajustado para Windows
             else:
                 font_size = 16  # Tamanho ajustado para macOS
 
@@ -543,7 +545,9 @@ class URLShortenerApp(QWidget):
                 except IOError:
                     try:
                         # Terceira tentativa: caminho específico do Windows
-                        font = ImageFont.truetype("C:\\Windows\\Fonts\\arial.ttf", font_size)
+                        font = ImageFont.truetype(
+                            "C:\\Windows\\Fonts\\arial.ttf", font_size
+                        )
                     except IOError:
                         # Fallback final: usar a fonte padrão do Pillow
                         font = ImageFont.load_default()

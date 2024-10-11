@@ -80,7 +80,7 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6\n07-10-2024")
+        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6.1\n11-10-2024")
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()   
 
