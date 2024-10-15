@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
 )
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
-from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
+from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize, QMimeData
 
 # desabilitando logging devido a falso positivo de virus
 """
@@ -493,9 +493,20 @@ class URLShortenerApp(QWidget):
         return "Não foi possível encurtar a URL com serviços alternativos."
 
     def copy_to_clipboard(self):
+        # clipboard = QApplication.clipboard()
+        # clipboard.setText(self.short_url_output.text())
+        # print(f"Copiado para área de transferência: {self.short_url_output.text()}")
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.short_url_output.text())
-        print(f"Copiado para área de transferência: {self.short_url_output.text()}")
+        plain_text = self.short_url_output.text()
+        rtf_text = (
+            "{\\rtf1\\ansi\\deff0"
+            "{\\fonttbl{\\f0 Times New Roman;}}"
+            "\\f0\\fs22 " + plain_text + "}")
+        mime_data = QMimeData()
+        mime_data.setText(plain_text)  # Texto simples
+        mime_data.setData("text/rtf", rtf_text.encode('utf-8'))  # Texto RTF
+        clipboard.setMimeData(mime_data)
+        print(f"Copiado para área de transferência (RTF): {plain_text}")
 
     def copy_alt_to_clipboard(self):
         clipboard = QApplication.clipboard()
