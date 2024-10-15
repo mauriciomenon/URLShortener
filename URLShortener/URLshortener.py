@@ -1,4 +1,4 @@
-# Mauricio Menon (+AI) 10102024
+# Mauricio Menon (+AI) 15102024
 # Imports padrão do Python
 import sys
 import os
@@ -80,7 +80,9 @@ class URLShortenerApp(QWidget):
     def show_about_dialog(self):
         about_msg = QMessageBox(self)
         about_msg.setWindowTitle("About")
-        about_msg.setText("URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.6.1\n11-10-2024")
+        about_msg.setText(
+            "URL Shortener\nPyQt6+PyInstaller\nAutor: Maurício Menon (+AI)\nVersão: 1.7.1\n15-10-2024\nhttps://github.com/mauriciomenon"
+        )
         about_msg.setGeometry(50, 50, 150, 100)
         about_msg.exec()   
 
@@ -507,7 +509,7 @@ class URLShortenerApp(QWidget):
         mime_data.setData("text/rtf", rtf_text.encode('utf-8'))  # Texto RTF
         clipboard.setMimeData(mime_data)
         print(f"Copiado para área de transferência (RTF): {plain_text}")
-        
+
         # Verificação simples ao final
         mime_data = clipboard.mimeData()
         if mime_data.hasText():
