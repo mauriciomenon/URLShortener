@@ -35,7 +35,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
-
+"""
+# desabilitando logging devido a falso positivo de virus
 def setup_logging(
     log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=2
 ):
@@ -67,7 +68,7 @@ def setup_logging(
     root_logger.addHandler(console_handler)
 
     logging.info("Logging configurado com sucesso.")
-
+"""
 
 class URLShortenerApp(QWidget):
     def __init__(self):
@@ -536,25 +537,22 @@ class URLShortenerApp(QWidget):
             if qr_text:
                 # Ajustar o tamanho da fonte dependendo do sistema operacional
                 if platform.system() == "Windows":
-                    font_size = 14  # Tamanho ajustado para Windows
-                else:
-                    font_size = 16  # Tamanho ajustado para macOS
-
-                try:
-                    # Primeira tentativa: carregar Arial pelo nome genérico
-                    font = ImageFont.truetype("arial.ttf", font_size)
-                except IOError:
+                    font_size = 14  
                     try:
-                        # Segunda tentativa: caminho específico do macOS
-                        font = ImageFont.truetype("/Library/Fonts/Arial.ttf", font_size)
+                        font = ImageFont.truetype("times.ttf", font_size) 
                     except IOError:
                         try:
-                            # Terceira tentativa: caminho específico do Windows
-                            font = ImageFont.truetype(
-                                "C:\\Windows\\Fonts\\arial.ttf", font_size
-                            )
+                            font = ImageFont.truetype("C:\\Windows\\Fonts\\times.ttf", font_size)
                         except IOError:
-                            # Fallback final: usar a fonte padrão do Pillow
+                            font = ImageFont.load_default()                      
+                else:
+                    font_size = 16  # Tamanho ajustado para macOS
+                    try:
+                        font = ImageFont.truetype("times.ttf", font_size)
+                    except IOError:
+                        try:
+                            font = ImageFont.truetype("/Library/Fonts/ttf.ttf", font_size)
+                        except IOError:
                             font = ImageFont.load_default()
 
                 # Centralizar o texto na parte inferior do QR Code
@@ -593,8 +591,8 @@ class URLShortenerApp(QWidget):
 
 
 def main():
-    # Configurar o logging
-    setup_logging()
+    # Configurar o logging - Desabilitado devido falso positivo de virus
+    # setup_logging()
 
     logging.info("Iniciando aplicação URLShortener")
     app = QApplication(sys.argv)
