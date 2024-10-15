@@ -507,6 +507,15 @@ class URLShortenerApp(QWidget):
         mime_data.setData("text/rtf", rtf_text.encode('utf-8'))  # Texto RTF
         clipboard.setMimeData(mime_data)
         print(f"Copiado para área de transferência (RTF): {plain_text}")
+        
+        # Verificação simples ao final
+        mime_data = clipboard.mimeData()
+        if mime_data.hasText():
+            print("Verificação: Texto puro encontrado na área de transferência.")
+        if mime_data.hasFormat("text/rtf"):
+            print("Verificação: RTF encontrado na área de transferência.")
+        else:
+            print("Verificação: Nenhum conteúdo RTF encontrado.")
 
     def copy_alt_to_clipboard(self):
         clipboard = QApplication.clipboard()
