@@ -35,8 +35,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPixmap, QClipboard, QImage
 from PyQt6.QtCore import Qt, QTimer, QDateTime, QSize
 
-"""
 # desabilitando logging devido a falso positivo de virus
+"""
 def setup_logging(
     log_file="url_shortener.log", max_log_size=1024 * 1024, backup_count=2
 ):
