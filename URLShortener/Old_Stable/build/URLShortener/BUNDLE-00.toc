@@ -1,3 +1,0 @@
-([('URLShortener',
-   '/Users/menon/Documents/GitHub/aulascomad/URLShortener/dist/URLShortener',
-   'EXECUTABLE')],)
